@@ -1,0 +1,279 @@
+{
+  "info": {
+    "name": "VELO Customer Addresses - Local cycle",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Customer addresses only. Set accessToken from normal OTP login and baseUrl. Select No environment and run 01-08. Creates, updates and deletes its demo address. Requests 06=409 and 08=404 are expected. No cart is changed. Never export populated tokens. See docs/customer-cart-api.md."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5080",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "addressId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "addressVersion",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "oldAddressVersion",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Confirm customer login",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/auth/me",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if(!pm.variables.get(\"accessToken\")) throw new Error(\"Set the normal customer accessToken.\");"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Create demo address",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/customers/me/addresses",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"label\": \"Postman Home\",\n  \"recipientName\": \"Test Customer\",\n  \"phoneNumber\": \"+201012345678\",\n  \"city\": \"Cairo\",\n  \"area\": \"Nasr City\",\n  \"street\": \"Example street\",\n  \"building\": \"10\",\n  \"floor\": \"2\",\n  \"apartment\": \"4\",\n  \"instructions\": \"Demo address\",\n  \"latitude\": 30.05,\n  \"longitude\": 31.35,\n  \"isDefault\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "if(pm.response.code === 201) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"addressId\", data.id);",
+              "  pm.collectionVariables.set(\"addressVersion\", data.version);",
+              "  pm.collectionVariables.set(\"oldAddressVersion\", data.version);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 List my addresses",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/customers/me/addresses",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Contains demo address\", () => pm.expect(data.some(x => x.id === pm.collectionVariables.get(\"addressId\"))).to.eql(true));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Read demo address",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/customers/me/addresses/{{addressId}}",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Own address\", () => pm.expect(data.id).to.eql(pm.collectionVariables.get(\"addressId\")));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Update demo address",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/v1/customers/me/addresses/{{addressId}}",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"label\": \"Postman Updated\",\n  \"recipientName\": \"Test Customer\",\n  \"phoneNumber\": \"+201012345678\",\n  \"city\": \"Cairo\",\n  \"area\": \"Nasr City\",\n  \"street\": \"Example street\",\n  \"building\": \"10\",\n  \"floor\": \"2\",\n  \"apartment\": \"4\",\n  \"instructions\": \"Demo address\",\n  \"latitude\": 30.05,\n  \"longitude\": 31.35,\n  \"isDefault\": false,\n  \"version\": \"{{addressVersion}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"addressVersion\", data.version);",
+              "  pm.test(\"Updated label\", () => pm.expect(data.label).to.eql(\"Postman Updated\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 Stale address edit rejected",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/v1/customers/me/addresses/{{addressId}}",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"label\": \"Postman Home\",\n  \"recipientName\": \"Test Customer\",\n  \"phoneNumber\": \"+201012345678\",\n  \"city\": \"Cairo\",\n  \"area\": \"Nasr City\",\n  \"street\": \"Example street\",\n  \"building\": \"10\",\n  \"floor\": \"2\",\n  \"apartment\": \"4\",\n  \"instructions\": \"Demo address\",\n  \"latitude\": 30.05,\n  \"longitude\": 31.35,\n  \"isDefault\": false,\n  \"version\": \"{{oldAddressVersion}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
+              "if(pm.response.code === 409) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Version conflict\", () => pm.expect(data.code).to.eql(\"address_version_conflict\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 Delete demo address",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/api/v1/customers/me/addresses/{{addressId}}",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 Deleted address no longer found",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/customers/me/addresses/{{addressId}}",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));",
+              "if(pm.response.code === 404) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Gone\", () => pm.expect(data.code).to.eql(\"address_not_found\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

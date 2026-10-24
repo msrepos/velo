@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../Velo.Modules.Identity.Contracts/Velo.Modules.Identity.Contracts.csproj" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="10.0.13" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.13" />
+    <!-- Override the older transitive PKCS package brought in by SqlClient. -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Domain/" />
+    <Folder Include="Application/" />
+    <Folder Include="Infrastructure/" />
+    <Folder Include="Endpoints/" />
+  </ItemGroup>
+</Project>

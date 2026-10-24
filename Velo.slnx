@@ -1,0 +1,86 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Velo.Api/Velo.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Identity/">
+    <Project Path="src/Modules/Identity/Velo.Modules.Identity.Contracts/Velo.Modules.Identity.Contracts.csproj" />
+    <Project Path="src/Modules/Identity/Velo.Modules.Identity/Velo.Modules.Identity.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Customers/">
+    <Project Path="src/Modules/Customers/Velo.Modules.Customers.Contracts/Velo.Modules.Customers.Contracts.csproj" />
+    <Project Path="src/Modules/Customers/Velo.Modules.Customers/Velo.Modules.Customers.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Catalog/">
+    <Project Path="src/Modules/Catalog/Velo.Modules.Catalog.Contracts/Velo.Modules.Catalog.Contracts.csproj" />
+    <Project Path="src/Modules/Catalog/Velo.Modules.Catalog/Velo.Modules.Catalog.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Inventory/">
+    <Project Path="src/Modules/Inventory/Velo.Modules.Inventory.Contracts/Velo.Modules.Inventory.Contracts.csproj" />
+    <Project Path="src/Modules/Inventory/Velo.Modules.Inventory/Velo.Modules.Inventory.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Orders/">
+    <Project Path="src/Modules/Orders/Velo.Modules.Orders/Velo.Modules.Orders.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Payments/">
+    <Project Path="src/Modules/Payments/Velo.Modules.Payments.Contracts/Velo.Modules.Payments.Contracts.csproj" />
+    <Project Path="src/Modules/Payments/Velo.Modules.Payments/Velo.Modules.Payments.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Delivery/">
+    <Project Path="src/Modules/Delivery/Velo.Modules.Delivery.Contracts/Velo.Modules.Delivery.Contracts.csproj" />
+    <Project Path="src/Modules/Delivery/Velo.Modules.Delivery/Velo.Modules.Delivery.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Notifications/">
+    <Project Path="src/Modules/Notifications/Velo.Modules.Notifications.Contracts/Velo.Modules.Notifications.Contracts.csproj" />
+    <Project Path="src/Modules/Notifications/Velo.Modules.Notifications/Velo.Modules.Notifications.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <File Path="tools/postman/Velo.Auth.postman_collection.json" />
+    <File Path="tools/postman/Velo.Catalog.postman_collection.json" />
+    <File Path="tools/postman/Velo.Inventory.postman_collection.json" />
+    <File Path="tools/postman/Velo.CustomerCart.postman_collection.json" />
+    <File Path="tools/postman/Velo.Customers.postman_collection.json" />
+    <File Path="tools/postman/Velo.Orders.postman_collection.json" />
+    <File Path="tools/postman/README.md" />
+    <File Path="tests/README.md" />
+    <Project Path="tests/Velo.Auth.IntegrationTests/Velo.Auth.IntegrationTests.csproj" />
+    <Project Path="tests/Velo.Catalog.IntegrationTests/Velo.Catalog.IntegrationTests.csproj" />
+    <Project Path="tests/Velo.Commerce.IntegrationTests/Velo.Commerce.IntegrationTests.csproj" />
+    <Project Path="tests/Velo.Inventory.IntegrationTests/Velo.Inventory.IntegrationTests.csproj" />
+    <Project Path="tests/Velo.Orders.IntegrationTests/Velo.Orders.IntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/docs/">
+    <File Path="docs/development.md" />
+    <File Path="docs/authentication-api.md" />
+    <File Path="docs/catalog-api.md" />
+    <File Path="docs/inventory-api.md" />
+    <File Path="docs/customer-cart-api.md" />
+    <File Path="docs/orders-api.md" />
+    <File Path="docs/architecture/project-structure.md" />
+    <File Path="docs/architecture/authentication.md" />
+    <File Path="docs/architecture/database-migrations.md" />
+  </Folder>
+  <Folder Name="/infrastructure/">
+    <File Path="infrastructure/docker/compose.yml" />
+    <File Path="infrastructure/docker/.env.example" />
+    <File Path="infrastructure/database/identity.sql" />
+    <File Path="infrastructure/database/catalog.sql" />
+    <File Path="infrastructure/database/inventory.sql" />
+    <File Path="infrastructure/database/verify-inventory.sql" />
+    <File Path="infrastructure/database/customers.sql" />
+    <File Path="infrastructure/database/orders.sql" />
+    <File Path="infrastructure/database/verify-customer-cart.sql" />
+    <File Path="infrastructure/database/verify-orders.sql" />
+    <File Path="infrastructure/database/verify-catalog.sql" />
+    <File Path="infrastructure/database/verify-identity.sql" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="global.json" />
+    <File Path=".config/dotnet-tools.json" />
+    <File Path=".gitignore" />
+    <File Path=".gitattributes" />
+    <File Path=".editorconfig" />
+  </Folder>
+</Solution>

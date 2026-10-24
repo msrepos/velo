@@ -1,0 +1,558 @@
+{
+  "info": {
+    "name": "VELO Customer addresses and Cart — Local cycle",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "WARNING: request 08 clears the logged-in customer's current cart. Use a test customer. Creates/updates/deletes a demo address. Set accessToken from normal OTP login and an active Catalog variantId. Select No environment. Run 01–16 in order. 06=409, 12=412, 16=404 are expected. This collection does not create orders or reserve stock; use Velo.Orders for Checkout. See docs/customer-cart-api.md. Never export populated tokens."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5080",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "variantId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "addressId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "addressVersion",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "oldAddressVersion",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cartEtag",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "staleCartEtag",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Confirm customer login",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/auth/me",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if(!pm.variables.get(\"accessToken\")) throw new Error(\"Set the normal customer accessToken.\");",
+              "if(!pm.variables.get(\"variantId\")) throw new Error(\"Set an active Catalog variantId, not productId.\");"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Create demo address",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/customers/me/addresses",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"label\": \"Postman Home\",\n  \"recipientName\": \"Test Customer\",\n  \"phoneNumber\": \"+201012345678\",\n  \"city\": \"Cairo\",\n  \"area\": \"Nasr City\",\n  \"street\": \"Example street\",\n  \"building\": \"10\",\n  \"floor\": \"2\",\n  \"apartment\": \"4\",\n  \"instructions\": \"Demo address\",\n  \"latitude\": 30.05,\n  \"longitude\": 31.35,\n  \"isDefault\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "if(pm.response.code === 201) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"addressId\", data.id);",
+              "  pm.collectionVariables.set(\"addressVersion\", data.version);",
+              "  pm.collectionVariables.set(\"oldAddressVersion\", data.version);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 List my addresses",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/customers/me/addresses",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Contains demo address\", () => pm.expect(data.some(x => x.id === pm.collectionVariables.get(\"addressId\"))).to.eql(true));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Read demo address",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/customers/me/addresses/{{addressId}}",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Own address\", () => pm.expect(data.id).to.eql(pm.collectionVariables.get(\"addressId\")));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Update demo address",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/v1/customers/me/addresses/{{addressId}}",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"label\": \"Postman Updated\",\n  \"recipientName\": \"Test Customer\",\n  \"phoneNumber\": \"+201012345678\",\n  \"city\": \"Cairo\",\n  \"area\": \"Nasr City\",\n  \"street\": \"Example street\",\n  \"building\": \"10\",\n  \"floor\": \"2\",\n  \"apartment\": \"4\",\n  \"instructions\": \"Demo address\",\n  \"latitude\": 30.05,\n  \"longitude\": 31.35,\n  \"isDefault\": false,\n  \"version\": \"{{addressVersion}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"addressVersion\", data.version);",
+              "  pm.test(\"Updated label\", () => pm.expect(data.label).to.eql(\"Postman Updated\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 Stale address edit rejected",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/v1/customers/me/addresses/{{addressId}}",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"label\": \"Postman Home\",\n  \"recipientName\": \"Test Customer\",\n  \"phoneNumber\": \"+201012345678\",\n  \"city\": \"Cairo\",\n  \"area\": \"Nasr City\",\n  \"street\": \"Example street\",\n  \"building\": \"10\",\n  \"floor\": \"2\",\n  \"apartment\": \"4\",\n  \"instructions\": \"Demo address\",\n  \"latitude\": 30.05,\n  \"longitude\": 31.35,\n  \"isDefault\": false,\n  \"version\": \"{{oldAddressVersion}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
+              "if(pm.response.code === 409) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Version conflict\", () => pm.expect(data.code).to.eql(\"address_version_conflict\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 Read cart and capture ETag",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/cart",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"cartEtag\", pm.response.headers.get(\"ETag\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 Clear current demo customer cart",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/api/v1/cart",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{cartEtag}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"cartEtag\", pm.response.headers.get(\"ETag\"));",
+              "  pm.test(\"Empty cart\", () => pm.expect(data.items).to.have.length(0));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 Set variant quantity to 2",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/v1/cart/items/{{variantId}}",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{cartEtag}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quantity\": 2\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set(\"staleCartEtag\", pm.collectionVariables.get(\"cartEtag\"));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"cartEtag\", pm.response.headers.get(\"ETag\"));",
+              "  pm.test(\"Quantity set\", () => pm.expect(data.items[0].quantity).to.eql(2));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 Check server prices and subtotal",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/cart",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"cartEtag\", pm.response.headers.get(\"ETag\"));",
+              "  pm.test(\"Server prices\", () => { pm.expect(data.currency).to.eql(\"EGP\"); pm.expect(data.items).to.have.length(1); const item=data.items[0]; pm.expect(item.isAvailable).to.eql(true); pm.expect(data.subtotal).to.be.closeTo(item.unitPrice * item.quantity, 0.000001); });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 Replace quantity with 3",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/v1/cart/items/{{variantId}}",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{cartEtag}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quantity\": 3\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"cartEtag\", pm.response.headers.get(\"ETag\"));",
+              "  pm.test(\"Absolute quantity, not increment\", () => pm.expect(data.items[0].quantity).to.eql(3));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 Stale cart edit rejected",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/v1/cart/items/{{variantId}}",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{staleCartEtag}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quantity\": 4\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 412\", () => pm.response.to.have.status(412));",
+              "if(pm.response.code === 412) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Version conflict\", () => pm.expect(data.code).to.eql(\"cart_version_conflict\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 Remove variant",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/api/v1/cart/items/{{variantId}}",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{cartEtag}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"cartEtag\", pm.response.headers.get(\"ETag\"));",
+              "  pm.test(\"Removed\", () => pm.expect(data.items).to.have.length(0));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 Check final cart",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/cart",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"cartEtag\", pm.response.headers.get(\"ETag\"));",
+              "  pm.test(\"Empty and zero subtotal\", () => { pm.expect(data.items).to.have.length(0); pm.expect(data.subtotal).to.eql(0); });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 Delete demo address",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/api/v1/customers/me/addresses/{{addressId}}",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 Deleted address no longer found",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/customers/me/addresses/{{addressId}}",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));",
+              "if(pm.response.code === 404) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Gone\", () => pm.expect(data.code).to.eql(\"address_not_found\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

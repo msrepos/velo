@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.13" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <ProjectReference Include="../Velo.Modules.Delivery.Contracts/Velo.Modules.Delivery.Contracts.csproj" />
+    <ProjectReference Include="../../Identity/Velo.Modules.Identity.Contracts/Velo.Modules.Identity.Contracts.csproj" />
+    <Folder Include="Domain/" />
+    <Folder Include="Application/" />
+    <Folder Include="Infrastructure/" />
+    <Folder Include="Endpoints/" />
+  </ItemGroup>
+</Project>

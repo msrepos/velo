@@ -1,0 +1,423 @@
+{
+  "info": {
+    "name": "VELO - Local Customer Auth Cycle",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Local Development only. Run requests 01–10 in order, or use Collection Runner once. A random phone is generated for each new cycle by default. Registration accepts phoneNumber, email and name and does not yet create a user; successful verification creates the user if needed and logs them in. No real SMS is sent. The last two requests EXPECT 401 after logout. Set generateNewPhone=false and phoneNumber to an international number to log in to an existing user; wait 60 seconds between OTP requests for that number. This collection captures developmentCode and tokens locally; do not export populated variables."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5080",
+      "type": "string"
+    },
+    {
+      "key": "generateNewPhone",
+      "value": "true",
+      "type": "string"
+    },
+    {
+      "key": "phoneNumber",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "challengeId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "otpCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sessionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "name",
+      "value": "Velo Demo User",
+      "type": "string"
+    },
+    {
+      "key": "email",
+      "value": "demo@example.com",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Health",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"API is healthy\", () => pm.expect(pm.response.text()).to.eql(\"Healthy\"));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [],
+        "url": "{{baseUrl}}/health/live"
+      }
+    },
+    {
+      "name": "02 - Register with phone, email and name",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "[\"challengeId\", \"otpCode\", \"accessToken\", \"refreshToken\", \"sessionId\", \"userId\"].forEach(key => pm.collectionVariables.unset(key));",
+              "if (pm.collectionVariables.get(\"generateNewPhone\") === \"true\" || !pm.collectionVariables.get(\"phoneNumber\")) {",
+              "  pm.collectionVariables.set(\"phoneNumber\", \"+2010\" + String(Math.floor(Math.random() * 100000000)).padStart(8, \"0\"));",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Development OTP is available\", () => pm.expect(data.developmentCode, \"Start the API with the Development http profile\").to.match(/^[0-9]{6}$/));",
+              "  pm.collectionVariables.set(\"challengeId\", data.challengeId);",
+              "  if (data.developmentCode) pm.collectionVariables.set(\"otpCode\", data.developmentCode);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"email\": \"{{email}}\",\n  \"name\": \"{{name}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/v1/auth/register"
+      }
+    },
+    {
+      "name": "03 - Verify OTP / Create user and login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Access and refresh tokens exist\", () => { pm.expect(data.accessToken).to.be.a(\"string\").and.not.empty; pm.expect(data.refreshToken).to.be.a(\"string\").and.not.empty; });",
+              "  [\"accessToken\", \"refreshToken\", \"sessionId\"].forEach(key => pm.collectionVariables.set(key, data[key]));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"challengeId\": \"{{challengeId}}\",\n  \"code\": \"{{otpCode}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/v1/auth/otp/verify"
+      }
+    },
+    {
+      "name": "04 - Current user",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"userId\", data.id);",
+              "  pm.test(\"Phone matches and role is Customer\", () => { pm.expect(data.phoneNumber).to.eql(pm.collectionVariables.get(\"phoneNumber\")); pm.expect(data.roles).to.eql([\"Customer\"]); });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/auth/me"
+      }
+    },
+    {
+      "name": "05 - My sessions",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) pm.test(\"Current session is listed\", () => pm.expect(pm.response.json().some(s => s.id === pm.collectionVariables.get(\"sessionId\") && s.isCurrent)).to.eql(true));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/auth/sessions"
+      }
+    },
+    {
+      "name": "06 - Refresh tokens",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set(\"previousRefreshToken\", pm.collectionVariables.get(\"refreshToken\"));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) pm.test(\"Refresh token rotated\", () => pm.expect(pm.response.json().refreshToken).not.to.eql(pm.variables.get(\"previousRefreshToken\")));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Access and refresh tokens exist\", () => { pm.expect(data.accessToken).to.be.a(\"string\").and.not.empty; pm.expect(data.refreshToken).to.be.a(\"string\").and.not.empty; });",
+              "  [\"accessToken\", \"refreshToken\", \"sessionId\"].forEach(key => pm.collectionVariables.set(key, data[key]));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/v1/auth/refresh"
+      }
+    },
+    {
+      "name": "07 - Current user with new access token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) pm.test(\"Same user after refresh\", () => pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get(\"userId\")));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/auth/me"
+      }
+    },
+    {
+      "name": "08 - Logout current session",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/auth/logout"
+      }
+    },
+    {
+      "name": "09 - Profile after logout (EXPECTED 401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 401\", () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/auth/me"
+      }
+    },
+    {
+      "name": "10 - Refresh after logout (EXPECTED 401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 401\", () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/v1/auth/refresh"
+      }
+    }
+  ]
+}

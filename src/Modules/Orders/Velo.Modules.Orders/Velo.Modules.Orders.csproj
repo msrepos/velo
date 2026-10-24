@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../../Delivery/Velo.Modules.Delivery.Contracts/Velo.Modules.Delivery.Contracts.csproj" />
+    <ProjectReference Include="../../Payments/Velo.Modules.Payments.Contracts/Velo.Modules.Payments.Contracts.csproj" />
+    <ProjectReference Include="../../Notifications/Velo.Modules.Notifications.Contracts/Velo.Modules.Notifications.Contracts.csproj" />
+    <ProjectReference Include="../../Customers/Velo.Modules.Customers.Contracts/Velo.Modules.Customers.Contracts.csproj" />
+    <ProjectReference Include="../../Inventory/Velo.Modules.Inventory.Contracts/Velo.Modules.Inventory.Contracts.csproj" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.13" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <ProjectReference Include="../../Catalog/Velo.Modules.Catalog.Contracts/Velo.Modules.Catalog.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Domain/" />
+    <Folder Include="Application/" />
+    <Folder Include="Infrastructure/" />
+    <Folder Include="Endpoints/" />
+  </ItemGroup>
+</Project>

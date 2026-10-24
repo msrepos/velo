@@ -1,0 +1,57 @@
+@Velo_HostAddress = http://localhost:5080
+@phoneNumber = +201020002250
+@name = Velo Admin User
+@email = admin@veloapp.ai
+@challengeId = 00000000-0000-0000-0000-000000000000
+@otpCode = replace-with-developmentCode
+@accessToken = replace-with-accessToken
+@refreshToken = replace-with-current-refreshToken
+
+GET {{Velo_HostAddress}}/health/live
+Accept: text/plain
+
+###
+
+### 1. Register; copy challengeId and developmentCode into variables above.
+POST {{Velo_HostAddress}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "phoneNumber": "{{phoneNumber}}",
+  "email": "{{email}}",
+  "name": "{{name}}"
+}
+
+### 2. Verify once; copy accessToken and refreshToken into variables above.
+POST {{Velo_HostAddress}}/api/v1/auth/otp/verify
+Content-Type: application/json
+
+{
+  "challengeId": "{{challengeId}}",
+  "code": "{{otpCode}}"
+}
+
+### 3. Current customer
+GET {{Velo_HostAddress}}/api/v1/auth/me
+Authorization: Bearer {{accessToken}}
+
+### 4. Sessions owned by the current customer
+GET {{Velo_HostAddress}}/api/v1/auth/sessions
+Authorization: Bearer {{accessToken}}
+
+### 5. Refresh once; replace BOTH token variables with the new response.
+# Reusing an old refresh token revokes the entire session.
+POST {{Velo_HostAddress}}/api/v1/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### 6. Revoke this session immediately
+POST {{Velo_HostAddress}}/api/v1/auth/logout
+Authorization: Bearer {{accessToken}}
+
+### Revoke all devices (requires an active session)
+POST {{Velo_HostAddress}}/api/v1/auth/logout-all
+Authorization: Bearer {{accessToken}}

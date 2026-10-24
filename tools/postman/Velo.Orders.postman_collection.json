@@ -1,0 +1,1229 @@
+{
+  "info": {
+    "name": "VELO Orders - Checkout, confirmation and cancellation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Local COD cycle. WARNING: request 06 clears the current customer's cart. Set customer accessToken, separate ordersStaffAccessToken and inventoryStaffAccessToken, active Catalog variantId, baseUrl. See docs/orders-api.md for Development token commands. Select No environment; run 01-27 within 10 minutes. The confirmed-order cancellation request expects 409; all other checks should pass. Creates real demo warehouse/stock, a confirmed order and a cancelled order; deletes only its demo address. Fulfillment selects the nearest eligible warehouse automatically. Local demo settings: flat delivery fee 20 EGP, 5 km radius, 10-minute reservation. Do not export populated tokens. Preview steps show the delivery fee/total before each checkout; expectedTotal must match the server total."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5080",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ordersStaffAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "inventoryStaffAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "variantId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "runId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "receiptOperationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "checkoutOperationA",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "checkoutOperationB",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "setupWarehouseId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "addressId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "addressVersion",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cartEtag",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "checkoutEtagA",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orderA",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orderB",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "fulfillmentWarehouseId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "expectedTotalA",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "expectedTotalB",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Verify customer login",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/auth/me",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "[\"accessToken\",\"ordersStaffAccessToken\",\"inventoryStaffAccessToken\",\"variantId\"].forEach(key => { if(!pm.variables.get(key)) throw new Error(\"Set \" + key + \" before running this collection. See docs/orders-api.md.\"); });",
+              "pm.collectionVariables.set(\"runId\", pm.variables.replaceIn(\"{{$guid}}\").replace(/-/g,\"\").slice(0,12));",
+              "pm.collectionVariables.set(\"receiptOperationId\", pm.variables.replaceIn(\"{{$guid}}\"));",
+              "pm.collectionVariables.set(\"checkoutOperationA\", pm.variables.replaceIn(\"{{$guid}}\"));",
+              "pm.collectionVariables.set(\"checkoutOperationB\", pm.variables.replaceIn(\"{{$guid}}\"));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Create located demo warehouse",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{inventoryStaffAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"code\": \"PM-ORDER-{{runId}}\",\n  \"name\": \"Orders demo {{runId}}\",\n  \"type\": \"Fixed\",\n  \"latitude\": 30.05,\n  \"longitude\": 31.35,\n  \"isActive\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "if(pm.response.code === 201) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"setupWarehouseId\",data.id);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Receive 20 units",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses/{{setupWarehouseId}}/adjustments",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{inventoryStaffAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{receiptOperationId}}\",\n  \"variantId\": \"{{variantId}}\",\n  \"quantityDelta\": 20,\n  \"reason\": \"Order demo receipt\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Create customer delivery address",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/customers/me/addresses",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"label\": \"Order demo {{runId}}\",\n  \"recipientName\": \"Test Customer\",\n  \"phoneNumber\": \"+201012345678\",\n  \"city\": \"Cairo\",\n  \"area\": \"Nasr City\",\n  \"street\": \"Order demo street\",\n  \"building\": \"10\",\n  \"latitude\": 30.05,\n  \"longitude\": 31.35,\n  \"isDefault\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "if(pm.response.code === 201) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"addressId\",data.id);",
+              "  pm.collectionVariables.set(\"addressVersion\",data.version);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Read current cart",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/cart",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"cartEtag\", pm.response.headers.get(\"ETag\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 Clear this test customers existing cart",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/api/v1/cart",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{cartEtag}}"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"cartEtag\", pm.response.headers.get(\"ETag\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 Set quantity to 2",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/v1/cart/items/{{variantId}}",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{cartEtag}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quantity\": 2\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"cartEtag\", pm.response.headers.get(\"ETag\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 Preview final fees and total A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code===200){ const data=pm.response.json(); pm.collectionVariables.set(\"cartEtag\", String.fromCharCode(34)+data.cart.version+String.fromCharCode(34)); pm.collectionVariables.set(\"expectedTotalA\",data.total); pm.test(\"Quoted total\",()=>pm.expect(data.total).to.be.closeTo(data.cart.subtotal+data.deliveryFee,0.000001)); }"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/orders/checkout/preview",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"addressId\": \"{{addressId}}\",\n  \"addressVersion\": \"{{addressVersion}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "09 Checkout order A",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/orders/checkout",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{cartEtag}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{checkoutOperationA}}\",\n  \"addressId\": \"{{addressId}}\",\n  \"addressVersion\": \"{{addressVersion}}\",\n  \"paymentMethod\": \"CashOnDelivery\",\n  \"expectedTotal\": {{expectedTotalA}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set(\"checkoutEtagA\",pm.collectionVariables.get(\"cartEtag\"));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "if(pm.response.code === 201) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"orderA\",data.id);",
+              "  pm.collectionVariables.set(\"fulfillmentWarehouseId\",data.warehouseId);",
+              "  pm.test(\"Pending COD order\", () => { pm.expect(data.status).to.eql(\"Pending\"); pm.expect(data.paymentMethod).to.eql(\"CashOnDelivery\"); pm.expect(data.paymentStatus).to.eql(\"Unpaid\"); pm.expect(data.total).to.be.closeTo(data.subtotal+data.deliveryFee,0.000001); });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 Retry original checkout without another order",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/orders/checkout",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{checkoutEtagA}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{checkoutOperationA}}\",\n  \"addressId\": \"{{addressId}}\",\n  \"addressVersion\": \"{{addressVersion}}\",\n  \"paymentMethod\": \"CashOnDelivery\",\n  \"expectedTotal\": {{expectedTotalA}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Same order\", () => pm.expect(data.id).to.eql(pm.collectionVariables.get(\"orderA\")));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 Read pending order A",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/orders/{{orderA}}",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Pending\", () => pm.expect(data.status).to.eql(\"Pending\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 Cart cleared only after successful checkout",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/cart",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"cartEtag\", pm.response.headers.get(\"ETag\"));",
+              "  pm.test(\"Empty\", () => pm.expect(data.items).to.have.length(0));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 Staff confirms order A",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/orders/{{orderA}}/confirm",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{ordersStaffAccessToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Confirmed but unpaid\", () => { pm.expect(data.status).to.eql(\"Confirmed\"); pm.expect(data.paymentStatus).to.eql(\"Unpaid\"); });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 Staff retries confirmation",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/orders/{{orderA}}/confirm",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{ordersStaffAccessToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Exactly two history events\", () => { pm.expect(data.status).to.eql(\"Confirmed\"); pm.expect(data.history).to.have.length(2); });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 Customer reads confirmed order",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/orders/{{orderA}}",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Confirmed\", () => pm.expect(data.status).to.eql(\"Confirmed\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 Confirmed order cancellation is rejected",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/orders/{{orderA}}/cancel",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"Too late\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
+              "if(pm.response.code === 409) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Invalid state\", () => pm.expect(data.code).to.eql(\"invalid_order_state\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17 Read cart before another checkout",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/cart",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"cartEtag\", pm.response.headers.get(\"ETag\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "18 Set quantity to 3",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/v1/cart/items/{{variantId}}",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{cartEtag}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quantity\": 3\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"cartEtag\", pm.response.headers.get(\"ETag\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "19 Preview final fees and total B",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code===200){ const data=pm.response.json(); pm.collectionVariables.set(\"cartEtag\", String.fromCharCode(34)+data.cart.version+String.fromCharCode(34)); pm.collectionVariables.set(\"expectedTotalB\",data.total); pm.test(\"Quoted total\",()=>pm.expect(data.total).to.be.closeTo(data.cart.subtotal+data.deliveryFee,0.000001)); }"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/orders/checkout/preview",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"addressId\": \"{{addressId}}\",\n  \"addressVersion\": \"{{addressVersion}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "20 Checkout order B",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/orders/checkout",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{cartEtag}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{checkoutOperationB}}\",\n  \"addressId\": \"{{addressId}}\",\n  \"addressVersion\": \"{{addressVersion}}\",\n  \"paymentMethod\": \"CashOnDelivery\",\n  \"expectedTotal\": {{expectedTotalB}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "if(pm.response.code === 201) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"orderB\",data.id);",
+              "  pm.test(\"Pending\", () => pm.expect(data.status).to.eql(\"Pending\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "21 Customer cancels pending order B",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/orders/{{orderB}}/cancel",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"Demo cancellation\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Cancelled\", () => pm.expect(data.status).to.eql(\"Cancelled\"));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "22 Retry cancellation",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/orders/{{orderB}}/cancel",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"Demo cancellation\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"No duplicate transition\", () => { pm.expect(data.status).to.eql(\"Cancelled\"); pm.expect(data.history).to.have.length(2); });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "23 List own order history",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/orders?page=1&pageSize=100",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Contains both demo orders\", () => { pm.expect(data.items.some(x=>x.id===pm.collectionVariables.get(\"orderA\"))).to.eql(true); pm.expect(data.items.some(x=>x.id===pm.collectionVariables.get(\"orderB\"))).to.eql(true); });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "24 Delete only the demo saved address",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/api/v1/customers/me/addresses/{{addressId}}",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "25 Confirmed order retains copied address",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/orders/{{orderA}}",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Address snapshot survives deletion\", () => { pm.expect(data.address.id).to.eql(pm.collectionVariables.get(\"addressId\")); pm.expect(data.address.street).to.eql(\"Order demo street\"); });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "26 Inspect fulfillment warehouse balance",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses/{{fulfillmentWarehouseId}}/balances/{{variantId}}",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{inventoryStaffAccessToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Valid balance\", () => { pm.expect(data.onHand).to.be.at.least(0); pm.expect(data.reserved).to.be.at.least(0); pm.expect(data.available).to.eql(data.onHand-data.reserved); });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "27 Inspect reserve and commit audit",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses/{{fulfillmentWarehouseId}}/movements?variantId={{variantId}}&page=1&pageSize=100",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{inventoryStaffAccessToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"One reserve and one commit for order A\", () => { const id=pm.collectionVariables.get(\"orderA\"); pm.expect(data.items.filter(x=>x.operationId===id && x.kind===\"Reserve\")).to.have.length(1); pm.expect(data.items.filter(x=>x.operationId===id && x.kind===\"Commit\")).to.have.length(1); });",
+              "}"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

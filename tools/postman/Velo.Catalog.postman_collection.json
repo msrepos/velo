@@ -1,0 +1,554 @@
+{
+  "info": {
+    "name": "VELO - Catalog Management Cycle",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Development workflow. First log in using the auth collection, copy your user ID, then run the local issue-development-catalog-token terminal command documented in docs/catalog-api.md. Paste its accessToken into staffAccessToken. Select No environment and run 01–13 in order. This creates real demo catalog rows in the configured local database. Expected 404 responses at steps 04 and 10 prove publication rules. New unique category/SKU values are generated on step 02. Tokens expire after 15 minutes by default."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5080",
+      "type": "string"
+    },
+    {
+      "key": "staffAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "categoryName",
+      "value": "ألبان تجريبي",
+      "type": "string"
+    },
+    {
+      "key": "productName",
+      "value": "لبن كامل الدسم",
+      "type": "string"
+    },
+    {
+      "key": "variantName",
+      "value": "1 لتر",
+      "type": "string"
+    },
+    {
+      "key": "price",
+      "value": "45.50",
+      "type": "string"
+    },
+    {
+      "key": "newPrice",
+      "value": "50.00",
+      "type": "string"
+    },
+    {
+      "key": "categoryId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "productId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "variantId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "categoryVersion",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "productVersion",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "variantVersion",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sku",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "runCategoryName",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Public categories",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/catalog/categories"
+      }
+    },
+    {
+      "name": "02 - Create category",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const suffix = pm.variables.replaceIn(\"{{$guid}}\").slice(0, 8);",
+              "pm.collectionVariables.set(\"runCategoryName\", pm.collectionVariables.get(\"categoryName\") + \"-\" + suffix);",
+              "pm.collectionVariables.set(\"sku\", \"MILK-1L-\" + suffix.toUpperCase());"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"categoryId\", data.id);",
+              "  pm.collectionVariables.set(\"categoryVersion\", data.version);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{staffAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{runCategoryName}}\",\n  \"isActive\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/v1/admin/catalog/categories"
+      }
+    },
+    {
+      "name": "03 - Create product",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"productId\", data.id);",
+              "  pm.collectionVariables.set(\"productVersion\", data.version);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{staffAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"categoryId\": \"{{categoryId}}\",\n  \"name\": \"{{productName}}\",\n  \"description\": \"منتج تجريبي للكتالوج\",\n  \"isActive\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/v1/admin/catalog/products"
+      }
+    },
+    {
+      "name": "04 - Product without variants is hidden (EXPECTED 404)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/catalog/products/{{productId}}"
+      }
+    },
+    {
+      "name": "05 - Create sellable variant",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"variantId\", data.id);",
+              "  pm.collectionVariables.set(\"variantVersion\", data.version);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{staffAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sku\": \"{{sku}}\",\n  \"name\": \"{{variantName}}\",\n  \"price\": {{price}},\n  \"isActive\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/v1/admin/catalog/products/{{productId}}/variants"
+      }
+    },
+    {
+      "name": "06 - Public product with variant",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) pm.test(\"Active SKU is visible\", () => pm.expect(pm.response.json().variants.some(v => v.id === pm.collectionVariables.get(\"variantId\") && v.currency === \"EGP\")).to.eql(true));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/catalog/products/{{productId}}"
+      }
+    },
+    {
+      "name": "07 - Update price using variant version",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"variantId\", data.id);",
+              "  pm.collectionVariables.set(\"variantVersion\", data.version);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{staffAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sku\": \"{{sku}}\",\n  \"name\": \"{{variantName}}\",\n  \"price\": {{newPrice}},\n  \"isActive\": true,\n  \"version\": \"{{variantVersion}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/v1/admin/catalog/products/{{productId}}/variants/{{variantId}}"
+      }
+    },
+    {
+      "name": "08 - Confirm new public price",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) pm.test(\"New price is visible\", () => pm.expect(pm.response.json().variants.find(v => v.id === pm.collectionVariables.get(\"variantId\")).price).to.eql(Number(pm.collectionVariables.get(\"newPrice\"))));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/catalog/products/{{productId}}"
+      }
+    },
+    {
+      "name": "09 - Deactivate product",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"productId\", data.id);",
+              "  pm.collectionVariables.set(\"productVersion\", data.version);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{staffAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"categoryId\": \"{{categoryId}}\",\n  \"name\": \"{{productName}}\",\n  \"description\": \"منتج تجريبي للكتالوج\",\n  \"isActive\": false,\n  \"version\": \"{{productVersion}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/v1/admin/catalog/products/{{productId}}"
+      }
+    },
+    {
+      "name": "10 - Inactive product hidden (EXPECTED 404)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/catalog/products/{{productId}}"
+      }
+    },
+    {
+      "name": "11 - Admin can still see inactive product",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) pm.test(\"Product remains inactive\", () => pm.expect(pm.response.json().isActive).to.eql(false));",
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"productId\", data.id);",
+              "  pm.collectionVariables.set(\"productVersion\", data.version);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{staffAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/admin/catalog/products/{{productId}}"
+      }
+    },
+    {
+      "name": "12 - Reactivate product",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"productId\", data.id);",
+              "  pm.collectionVariables.set(\"productVersion\", data.version);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{staffAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"categoryId\": \"{{categoryId}}\",\n  \"name\": \"{{productName}}\",\n  \"description\": \"منتج تجريبي للكتالوج\",\n  \"isActive\": true,\n  \"version\": \"{{productVersion}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/v1/admin/catalog/products/{{productId}}"
+      }
+    },
+    {
+      "name": "13 - Product visible again",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/catalog/products/{{productId}}"
+      }
+    }
+  ]
+}

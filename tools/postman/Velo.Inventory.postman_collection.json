@@ -1,0 +1,622 @@
+{
+  "info": {
+    "name": "VELO Inventory — Local cycle",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Set staffAccessToken to a development inventory.manage access token and variantId to an active Catalog variant GUID (not productId). Select No environment or ensure it does not override collection variables. Run 01–19 in order within 10 minutes. Creates real demo warehouses/stock. Never export populated tokens. See docs/inventory-api.md."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{staffAccessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5080",
+      "type": "string"
+    },
+    {
+      "key": "staffAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "variantId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "warehouseId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "targetWarehouseId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adjustmentOperationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "releaseOperationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "commitOperationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transferOperationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "runId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Create source warehouse",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "[\"staffAccessToken\",\"variantId\"].forEach(key => { if (!pm.variables.get(key)) throw new Error(\"Set \" + key + \" in collection variables first.\"); });",
+              "pm.collectionVariables.set(\"runId\", pm.variables.replaceIn(\"{{$guid}}\").replace(/-/g, \"\").slice(0, 12));",
+              "pm.collectionVariables.set(\"adjustmentOperationId\", pm.variables.replaceIn(\"{{$guid}}\"));",
+              "pm.collectionVariables.set(\"releaseOperationId\", pm.variables.replaceIn(\"{{$guid}}\"));",
+              "pm.collectionVariables.set(\"commitOperationId\", pm.variables.replaceIn(\"{{$guid}}\"));",
+              "pm.collectionVariables.set(\"transferOperationId\", pm.variables.replaceIn(\"{{$guid}}\"));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "if (pm.response.code === 201) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"warehouseId\", data.id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"code\": \"PM-SRC-{{runId}}\",\n  \"name\": \"Postman source {{runId}}\",\n  \"type\": \"Fixed\",\n  \"isActive\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "02 Create target warehouse",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "if (pm.response.code === 201) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"targetWarehouseId\", data.id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"code\": \"PM-DST-{{runId}}\",\n  \"name\": \"Postman target {{runId}}\",\n  \"type\": \"Fixed\",\n  \"isActive\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "03 Receive 20 units",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"movementId\", data.movementId);",
+              "  pm.test(\"Receipt balance\", () => pm.expect(data.balance.onHand).to.eql(20));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses/{{warehouseId}}/adjustments",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{adjustmentOperationId}}\",\n  \"variantId\": \"{{variantId}}\",\n  \"quantityDelta\": 20,\n  \"reason\": \"Postman receipt\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "04 Retry receipt without adding stock twice",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Same movement\", () => pm.expect(data.movementId).to.eql(pm.collectionVariables.get(\"movementId\")));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses/{{warehouseId}}/adjustments",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{adjustmentOperationId}}\",\n  \"variantId\": \"{{variantId}}\",\n  \"quantityDelta\": 20,\n  \"reason\": \"Postman receipt\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "05 Check 20 available",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Balance 20/0\", () => { pm.expect(data.onHand).to.eql(20); pm.expect(data.reserved).to.eql(0); pm.expect(data.available).to.eql(20); });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses/{{warehouseId}}/balances/{{variantId}}"
+      }
+    },
+    {
+      "name": "06 Reserve 5 units",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Pending\", () => pm.expect(data.status).to.eql(\"Pending\"));",
+              "  pm.collectionVariables.set(\"releaseReservationId\", data.id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/reservations",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{releaseOperationId}}\",\n  \"warehouseId\": \"{{warehouseId}}\",\n  \"reference\": \"pm-{{runId}}-release\",\n  \"items\": [\n    {\n      \"variantId\": \"{{variantId}}\",\n      \"quantity\": 5\n    }\n  ],\n  \"lifetimeMinutes\": 10\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "07 Check 15 available and 5 reserved",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Balance 20/5\", () => { pm.expect(data.onHand).to.eql(20); pm.expect(data.reserved).to.eql(5); pm.expect(data.available).to.eql(15); });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses/{{warehouseId}}/balances/{{variantId}}"
+      }
+    },
+    {
+      "name": "08 Release reservation",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Released\", () => pm.expect(data.status).to.eql(\"Released\"));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/reservations/{{releaseReservationId}}/release"
+      }
+    },
+    {
+      "name": "09 Retry release",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Still released\", () => pm.expect(data.status).to.eql(\"Released\"));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/reservations/{{releaseReservationId}}/release"
+      }
+    },
+    {
+      "name": "10 Check 20 available again",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Balance 20/0\", () => { pm.expect(data.onHand).to.eql(20); pm.expect(data.reserved).to.eql(0); pm.expect(data.available).to.eql(20); });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses/{{warehouseId}}/balances/{{variantId}}"
+      }
+    },
+    {
+      "name": "11 Reserve 4 units",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.collectionVariables.set(\"commitReservationId\", data.id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/reservations",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{commitOperationId}}\",\n  \"warehouseId\": \"{{warehouseId}}\",\n  \"reference\": \"pm-{{runId}}-commit\",\n  \"items\": [\n    {\n      \"variantId\": \"{{variantId}}\",\n      \"quantity\": 4\n    }\n  ],\n  \"lifetimeMinutes\": 10\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "12 Commit reservation",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Committed\", () => pm.expect(data.status).to.eql(\"Committed\"));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/reservations/{{commitReservationId}}/commit"
+      }
+    },
+    {
+      "name": "13 Retry commit",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Still committed\", () => pm.expect(data.status).to.eql(\"Committed\"));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/reservations/{{commitReservationId}}/commit"
+      }
+    },
+    {
+      "name": "14 Check 16 available",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Balance 16/0\", () => { pm.expect(data.onHand).to.eql(16); pm.expect(data.reserved).to.eql(0); pm.expect(data.available).to.eql(16); });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses/{{warehouseId}}/balances/{{variantId}}"
+      }
+    },
+    {
+      "name": "15 Transfer 3 units",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Atomic transfer\", () => { pm.expect(data.source.onHand).to.eql(13); pm.expect(data.target.onHand).to.eql(3); });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/transfers",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{transferOperationId}}\",\n  \"sourceWarehouseId\": \"{{warehouseId}}\",\n  \"targetWarehouseId\": \"{{targetWarehouseId}}\",\n  \"variantId\": \"{{variantId}}\",\n  \"quantity\": 3,\n  \"reason\": \"Postman replenishment\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "16 Check source final balance",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Balance 13/0\", () => { pm.expect(data.onHand).to.eql(13); pm.expect(data.reserved).to.eql(0); pm.expect(data.available).to.eql(13); });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses/{{warehouseId}}/balances/{{variantId}}"
+      }
+    },
+    {
+      "name": "17 Check target final balance",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Balance 3/0\", () => { pm.expect(data.onHand).to.eql(3); pm.expect(data.reserved).to.eql(0); pm.expect(data.available).to.eql(3); });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses/{{targetWarehouseId}}/balances/{{variantId}}"
+      }
+    },
+    {
+      "name": "18 View movement audit",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Six source movements, retries create none\", () => pm.expect(data.totalCount).to.eql(6));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses/{{warehouseId}}/movements?variantId={{variantId}}&page=1&pageSize=100"
+      }
+    },
+    {
+      "name": "19 View committed reservation",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) {",
+              "  const data = pm.response.json();",
+              "  pm.test(\"Current status committed\", () => pm.expect(data.status).to.eql(\"Committed\"));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/admin/inventory/reservations/{{commitReservationId}}"
+      }
+    }
+  ]
+}
