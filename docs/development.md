@@ -67,4 +67,6 @@ configuration, staff tokens and the two additional Inventory/Orders migrations.
 Development uses 20 EGP / 5 km / 10 minutes; checkout is disabled by default
 outside Development until explicitly configured.
 Real SMS delivery is deferred by user choice.
-Next add fulfillment/delivery, production staff provisioning and the payment flow.
+Fulfillment, delivery/receipt proof, COD collection, cash handover, in-app notifications
+and server-provisioned staff sessions are now implemented. See [full cycle](fulfillment-api.md)
+and [deployment](deployment.md). Real SMS/push/card integrations need provider setup.

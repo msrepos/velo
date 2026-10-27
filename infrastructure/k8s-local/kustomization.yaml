@@ -1,0 +1,36 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../k8s
+  - api-ingress.yaml
+  - pwa-ingress.yaml
+patches:
+  - target:
+      kind: ConfigMap
+      name: velo-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: velo-config
+        namespace: velo
+      data:
+        ASPNETCORE_ENVIRONMENT: Development
+        DOTNET_ENVIRONMENT: Development
+        Authentication__SmsProvider: Development
+        Authentication__ExposeDevelopmentCodes: "true"
+        AllowedHosts: localhost;velo-api;api.velo.internal
+  - target:
+      kind: Service
+      name: velo-api
+    patch: |-
+      - op: add
+        path: /spec/type
+        value: ClusterIP
+      - op: replace
+        path: /spec/ports
+        value:
+          - name: http
+            port: 80
+            targetPort: http
+

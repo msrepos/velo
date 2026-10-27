@@ -1,0 +1,170 @@
+/* Shared visual refinements for the customer storefront. */
+:root {
+  color: #202925;
+  background: #f7f8fa;
+  --green: #263c32;
+  --line: #e3e7e8;
+  --muted: #66716c;
+}
+body { min-width: 320px; }
+.skip-link { position: fixed; top: -80px; left: 20px; z-index: 100; padding: 14px 20px; background: white; color: var(--green); border-radius: 8px; }
+.skip-link:focus { top: 12px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline-color: var(--red); }
+.header { background: #fff; }
+.header-inner { height: 84px; }
+.header .wordmark { width: 116px; }
+.location { min-width: 0; }
+.location strong { overflow-wrap: anywhere; }
+.desktop-nav { gap: 8px; }
+.desktop-nav button { padding: 12px 17px; border-radius: 8px; font-size: 13px; }
+.desktop-nav button:hover { background: #f7f8fa; }
+.desktop-nav .selected { background: #fff0ef; }
+.desktop-nav .selected:after { display: none; }
+.icon-button { width: 44px; height: 44px; }
+.bag-button { min-height: 44px; border-radius: 10px; }
+main { padding-top: 36px; }
+h1 { font-size: clamp(24px, 2.5vw, 34px); letter-spacing: -1.2px; line-height: 1.25; }
+.eyebrow { color: #66716c; font-size: 10px; letter-spacing: 1.6px; }
+.delivery-pill { font-size: 12px; padding: 12px 16px; }
+.delivery-pill .muted { font-size: 11px; }
+.search-row { margin: 24px 0; }
+.search-box { min-height: 56px; border-radius: 12px; box-shadow: 0 2px 6px #172b1e03; }
+.search-box:focus-within { border-color: var(--red); box-shadow: 0 0 0 3px #ed3c3410; }
+.search-box input { font-size: 14px; }
+.search-hint { color: #77817b; }
+.hero-grid { grid-template-columns: minmax(0, 3fr) minmax(245px, 1fr); gap: 20px; }
+.hero { background: #edf1e8; min-height: 350px; border: 1px solid #e2e8dc; border-radius: 18px; padding: 36px; }
+.hero h2 { font-size: 48px; }
+.hero p { font-size: 14px; color: #586852; }
+.hero .primary { background: var(--red); padding: 14px 20px; font-size: 13px; }
+.hero .primary:hover { background: #d72f29; }
+.hero-footnote { font-size: 11px; color: #5d7058; }
+.side-promo { background: #fff; color: #263c32; border: 1px solid var(--line); border-radius: 18px; }
+.promo-top { color: #6b756f; font-size: 10px; }
+.promo-top svg { color: var(--red); }
+.side-promo h2 { font-size: 30px; }
+.side-promo p { font-size: 13px; color: #66716c; opacity: 1; }
+.side-promo button { color: var(--red); border-color: #ed3c3440; font-size: 12px; min-height: 44px; }
+.promo-doodle { color: #ed3c3409; }
+.catalog { margin-top: 40px; }
+.section-title h2 { font-size: 28px; }
+.sort-label { background: #fff; border: 1px solid var(--line); padding: 2px 10px; border-radius: 9px; color: #4c5851; }
+.sort-label select { font-size: 12px; min-height: 40px; }
+.categories { gap: 10px; margin-bottom: 12px; }
+.categories button { min-height: 46px; font-size: 12px; background: #fff; border-color: var(--line); border-radius: 10px; padding: 11px 17px; }
+.categories button svg { flex-shrink: 0; stroke-width: 1.7; }
+.categories button.active { background: var(--green); }
+.categories button:hover:not(.active) { background: #edf1ee; }
+.results-count { color: var(--muted); font-size: 12px; margin: 0 0 18px; }
+.product-grid { gap: 20px; }
+.product-card { padding: 10px 10px 17px; background: #fff; border: 1px solid var(--line); border-radius: 16px; transition: border-color .2s, box-shadow .2s; }
+.product-card:hover { border-color: #cbd4ce; box-shadow: 0 6px 20px #263c3208; }
+.product-image { border-radius: 10px; height: 195px; }
+.product-name { font-size: 14px; padding: 14px 5px 0; }
+.product-card > p { margin: 5px 5px 0; font-size: 12px; color: #66716c; line-height: 1.5; }
+.price { margin: 13px 5px 0; font-size: 17px; }
+.price small, .price del { font-size: 11px; }
+.product-badge { font-size: 8px; letter-spacing: .4px; padding: 6px 7px; background: #fffffff0; color: #40563b; top: 12px; left: 10px; }
+.favorite { width: 40px; height: 40px; right: 8px; top: 8px; background: #fffffff0; }
+.product-add { right: 10px; bottom: 10px; }
+.add-product { width: 44px; height: 44px; border: 1px solid #e1e6df; color: var(--red); border-radius: 10px; }
+.quantity { min-width: 112px; height: 44px; font-size: 14px; }
+.quantity > button { width: 36px; height: 40px; }
+.promise-strip { background: white; border: 1px solid var(--line); border-radius: 14px; padding: 26px 20px; }
+.promise-strip strong { font-size: 13px; }
+.promise-strip small { font-size: 11px; color: var(--muted); }
+.install-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+.install-card p { font-size: 12px; color: var(--muted); }
+.install-card > button { background: #fff0ef; color: #c52c25; min-height: 44px; font-size: 12px; }
+.dialog { background: #fff; border: 1px solid var(--line); }
+.cart-item strong, .totals p, .address-form > label { font-size: 14px; }
+.cart-item small, .cart-item b, .form-intro, .page-lead { font-size: 13px; }
+.fine-print { font-size: 12px; color: var(--muted); }
+.address-form input, .address-form textarea, .address-form select { font-size: 16px; min-height: 46px; border-color: var(--line); }
+.primary { min-height: 46px; font-size: 13px; }
+.order-card strong, .account-cards strong { font-size: 14px; }
+.order-card p, .account-cards p { font-size: 12px; }
+.status-tag { font-size: 11px; }
+.bottom-nav > button { color: #66716c; }
+@media (max-width: 1050px) {
+  .hero-grid { grid-template-columns: 1fr; }
+  .desktop-nav button { padding: 12px 10px; }
+  .header-inner { gap: 16px; }
+  .product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .header-inner { height: 76px; margin: 0 18px; gap: 12px; }
+  .header .wordmark { width: 90px; }
+  .header-divider { display: none; }
+  .location { gap: 7px; }
+  .location small { font-size: 9px; }
+  .location strong { font-size: 11px; max-width: 210px; }
+  main { margin: 0 16px; padding-top: 25px; }
+  h1 { font-size: 26px; max-width: 360px; line-height: 1.25; }
+  .intro-row .eyebrow { font-size: 9px; }
+  .search-row { margin: 20px 0; }
+  .search-box { min-height: 50px; padding: 3px 12px; }
+  .search-box input { font-size: 13px; }
+  .mobile-bag { width: 50px; height: 50px; }
+  .hero { min-height: 320px; padding: 26px 22px; border-radius: 16px; }
+  .hero-copy { max-width: 100%; }
+  .hero-kicker { font-size: 8px; letter-spacing: 1px; }
+  .hero h2 { font-size: 34px; margin: 18px 0 12px; }
+  .hero p { font-size: 12px; max-width: 165px; }
+  .hero .primary { padding: 12px 16px; font-size: 12px; min-height: 44px; }
+  .hero-footnote { font-size: 9px; }
+  .grocery-art { transform: scale(.43) rotate(7deg); right: -124px; bottom: -74px; }
+  .catalog { margin-top: 30px; }
+  .section-title h2 { font-size: 21px; }
+  .section-title .eyebrow { font-size: 8px; letter-spacing: 1px; }
+  .sort-label { padding: 0 5px; gap: 3px; }
+  .sort-label select { font-size: 11px; max-width: 90px; min-height: 40px; }
+  .categories { margin-right: -16px; padding-right: 16px; }
+  .categories button { font-size: 12px; padding: 10px 13px; }
+  .results-count { font-size: 12px; margin-bottom: 14px; }
+  .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .product-card { padding: 7px 7px 14px; border-radius: 13px; }
+  .product-image { height: 154px; }
+  .product-name { font-size: 13px; padding: 12px 3px 0; }
+  .product-card > p { font-size: 11px; margin-left: 3px; margin-right: 3px; }
+  .price { font-size: 16px; margin: 11px 3px 0; gap: 6px; flex-wrap: wrap; }
+  .price small, .price del { font-size: 10px; }
+  .product-badge { top: 10px; left: 7px; font-size: 7px; padding: 5px; max-width: calc(100% - 48px); }
+  .favorite { width: 36px; height: 36px; right: 5px; top: 5px; }
+  .product-add { right: 7px; bottom: 7px; }
+  .quantity { min-width: 108px; }
+  .promise-strip { padding: 20px 10px; gap: 10px; }
+  .promise-strip strong { font-size: 11px; line-height: 1.5; }
+  .promise-strip small { font-size: 10px; max-width: none; }
+  .install-card { padding: 20px 16px; }
+  .install-card h3 { font-size: 14px; }
+  .install-card p { font-size: 12px; }
+  .install-card > button { font-size: 12px; }
+  .bottom-nav { background: #ffffffed; padding-top: 8px; }
+  .bottom-nav > button { min-height: 48px; min-width: 64px; font-size: 11px; border-radius: 10px; padding: 5px 8px; }
+  .bottom-nav > button.active { background: #fff0ef; }
+  .floating-bag { bottom: calc(82px + env(safe-area-inset-bottom)); min-height: 50px; }
+  .cart-item { flex-wrap: wrap; }
+  .cart-item strong { font-size: 13px; }
+  .cart-item small { font-size: 11px; }
+  .cart-item b { font-size: 12px; }
+  .cart-item .quantity { min-width: 108px; margin-left: auto; }
+  .cart-item .quantity > button { width: 36px; }
+  .order-card { flex-wrap: wrap; }
+  .order-card strong { font-size: 12px; }
+  .order-card p { font-size: 11px; }
+  .order-card > div:nth-child(3) { margin-left: auto; }
+  .account-cards strong { font-size: 14px; }
+  .account-cards p, .demo-explainer p, .page-lead { font-size: 13px; }
+}
+@media (max-width: 360px) {
+  .header .wordmark { width: 78px; }
+  .location strong { max-width: 180px; font-size: 10px; }
+  .hero { padding-left: 17px; }
+  .hero h2 { font-size: 30px; }
+  .hero p { max-width: 150px; }
+  .grocery-art { right: -140px; }
+  .product-grid { gap: 8px; }
+  .product-image { height: 140px; }
+  .product-badge { font-size: 6px; }
+}

@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: velo-migrate
+  namespace: velo
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext: { runAsNonRoot: true, runAsUser: 1654, fsGroup: 1654 }
+      containers:
+        - name: migrate
+          image: velo-api:local
+          args: ["--migrate", "true"]
+          envFrom:
+            - configMapRef: { name: velo-config }
+            - secretRef: { name: velo-runtime }
+          env:
+            - name: ConnectionStrings__Velo
+              valueFrom:
+                secretKeyRef: { name: velo-migrations, key: ConnectionStrings__Velo }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+            - { name: certificate, mountPath: /certs, readOnly: true }
+      volumes:
+        - { name: tmp, emptyDir: {} }
+        - name: certificate
+          secret: { secretName: velo-dataprotection }

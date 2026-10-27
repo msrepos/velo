@@ -25,6 +25,8 @@ public sealed class StaffAccessService(IdentityDbContext db, UserManager<Applica
             db.UserClaims.AddRange(permissions.Select(x => new IdentityUserClaim<Guid> { UserId = userId, ClaimType = ClaimType, ClaimValue = x }));
             var result = await users.UpdateSecurityStampAsync(user);
             if (!result.Succeeded) throw new InvalidOperationException("Could not update staff access.");
+            await db.AuthSessions.Where(x => x.UserId == userId && x.RevokedAt == null)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.RevokedAt, time.GetUtcNow()), ct);
             return true;
         }, ct);
     }

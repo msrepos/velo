@@ -1,0 +1,2422 @@
+{
+  "info": {
+    "name": "VELO Full Backend - Delivery and Cash Cycle",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Local Development only. Set ONLY operationsAccessToken, obtained with --issue-development-operations-token <actual verified user GUID>. baseUrl defaults to http://localhost:5080. Choose No environment and run all 57 requests in order in Collection Runner within 10 minutes. The collection creates its own demo catalog, warehouse/20 units, customer, driver and two orders. It records delivery, cash handover, inbox read and a failed delivery/return without restock. The incorrect code and post-delivery code requests intentionally expect 400 and 409. Final stock is 17 units, reserved 0, outstanding driver cash 0. It uses simulated OTP and stops before demo registration unless the API reports Development/simulated codes. It does not clear any existing customer's cart. These are real local demo records; they are retained for inspection. Never export populated tokens or codes. See docs/fulfillment-api.md."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{operationsAccessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5080",
+      "type": "string"
+    },
+    {
+      "key": "operationsAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "runId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "categoryId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "productId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "variantId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "warehouseId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerPhone",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driverPhone",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerChallengeId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driverChallengeId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerOtp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driverOtp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driverAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerUserId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driverUserId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driverId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "addressId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "addressVersion",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cartEtag",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "originalCheckoutEtag",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orderIdB",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orderTotal",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orderTotalB",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "deliveryCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "wrongDeliveryCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notificationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "receiptOperationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "checkoutOperation",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "checkoutOperationB",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "collectionOperation",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "settlementOperation",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Development preflight - no real SMS",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/development/info",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if(!/^http:\\/\\/(localhost|127\\.0\\.0\\.1)(:\\d+)?$/.test(pm.variables.get(\"baseUrl\")))throw new Error(\"This demo is restricted to local Development URLs.\");",
+              "if(!pm.variables.get(\"operationsAccessToken\"))throw new Error(\"Set operationsAccessToken using --issue-development-operations-token with your real verified user GUID.\");",
+              "const run=pm.variables.replaceIn(\"{{$guid}}\").replace(/-/g,\"\");pm.collectionVariables.set(\"runId\",run.slice(0,12));",
+              "pm.collectionVariables.set(\"customerPhone\",\"+2010\"+(10000000+parseInt(run.slice(0,8),16)%90000000));",
+              "pm.collectionVariables.set(\"driverPhone\",\"+2012\"+(10000000+parseInt(run.slice(8,16),16)%90000000));",
+              "pm.collectionVariables.set(\"receiptOperationId\",pm.variables.replaceIn(\"{{$guid}}\"));",
+              "pm.collectionVariables.set(\"checkoutOperation\",pm.variables.replaceIn(\"{{$guid}}\"));",
+              "pm.collectionVariables.set(\"checkoutOperationB\",pm.variables.replaceIn(\"{{$guid}}\"));",
+              "pm.collectionVariables.set(\"collectionOperation\",pm.variables.replaceIn(\"{{$guid}}\"));",
+              "pm.collectionVariables.set(\"settlementOperation\",pm.variables.replaceIn(\"{{$guid}}\"));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Development preflight - no real SMS\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"Simulated OTP is enabled\",()=>pm.expect(data.simulatedOtpEnabled).to.eql(true));",
+              "if(!data.simulatedOtpEnabled){pm.execution.setNextRequest(null);throw new Error(\"Use local Development with simulated OTP.\");}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Database readiness",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health/ready",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Database readiness\"); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Create demo category",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/catalog/categories",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"PM Delivery {{runId}}\",\n  \"isActive\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\",()=>pm.response.to.have.status(201));",
+              "if(pm.response.code!==201) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Create demo category\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"categoryId\",data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Create demo product",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/catalog/products",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"categoryId\": \"{{categoryId}}\",\n  \"name\": \"Demo Bread {{runId}}\",\n  \"isActive\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\",()=>pm.response.to.have.status(201));",
+              "if(pm.response.code!==201) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Create demo product\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"productId\",data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Create demo variant",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/catalog/products/{{productId}}/variants",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sku\": \"PM-{{runId}}\",\n  \"name\": \"Pack\",\n  \"price\": 10,\n  \"isActive\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\",()=>pm.response.to.have.status(201));",
+              "if(pm.response.code!==201) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Create demo variant\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"variantId\",data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 Create located warehouse",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"code\": \"PM-{{runId}}\",\n  \"name\": \"Delivery demo {{runId}}\",\n  \"type\": \"Fixed\",\n  \"latitude\": 30.05,\n  \"longitude\": 31.35,\n  \"isActive\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\",()=>pm.response.to.have.status(201));",
+              "if(pm.response.code!==201) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Create located warehouse\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"warehouseId\",data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 Receive 20 units",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses/{{warehouseId}}/adjustments",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{receiptOperationId}}\",\n  \"variantId\": \"{{variantId}}\",\n  \"quantityDelta\": 20,\n  \"reason\": \"Full-cycle demo receipt\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Receive 20 units\"); }",
+              "const data=pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 Register demo customer",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/auth/register",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phoneNumber\": \"{{customerPhone}}\",\n  \"email\": \"customer-{{runId}}@example.test\",\n  \"name\": \"Demo customer\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Register demo customer\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"customerChallengeId\",data.challengeId);",
+              "pm.collectionVariables.set(\"customerOtp\",data.developmentCode);",
+              "if(!data.developmentCode){pm.execution.setNextRequest(null);throw new Error(\"Development code missing. Stop this demo.\");}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 Verify customer OTP",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/auth/otp/verify",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"challengeId\": \"{{customerChallengeId}}\",\n  \"code\": \"{{customerOtp}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Verify customer OTP\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"customerAccessToken\",data.accessToken);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 Read customer user ID",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/auth/me",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Read customer user ID\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"customerUserId\",data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 Register demo driver",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/auth/register",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phoneNumber\": \"{{driverPhone}}\",\n  \"email\": \"driver-{{runId}}@example.test\",\n  \"name\": \"Demo driver\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Register demo driver\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"driverChallengeId\",data.challengeId);",
+              "pm.collectionVariables.set(\"driverOtp\",data.developmentCode);",
+              "if(!data.developmentCode){pm.execution.setNextRequest(null);throw new Error(\"Development code missing. Stop this demo.\");}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 Verify driver OTP",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/auth/otp/verify",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"challengeId\": \"{{driverChallengeId}}\",\n  \"code\": \"{{driverOtp}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Verify driver OTP\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"driverAccessToken\",data.accessToken);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 Read driver user ID",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/auth/me",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{driverAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Read driver user ID\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"driverUserId\",data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 Approve verified user as driver",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/delivery/drivers",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{driverUserId}}\",\n  \"name\": \"Demo courier {{runId}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\",()=>pm.response.to.have.status(201));",
+              "if(pm.response.code!==201) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Approve verified user as driver\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"driverId\",data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 Save delivery address",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/customers/me/addresses",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"label\": \"Home\",\n  \"recipientName\": \"Demo Customer\",\n  \"phoneNumber\": \"{{customerPhone}}\",\n  \"city\": \"Cairo\",\n  \"area\": \"Nasr City\",\n  \"street\": \"Demo street\",\n  \"building\": \"10\",\n  \"latitude\": 30.05,\n  \"longitude\": 31.35\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\",()=>pm.response.to.have.status(201));",
+              "if(pm.response.code!==201) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Save delivery address\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"addressId\",data.id);",
+              "pm.collectionVariables.set(\"addressVersion\",data.version);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 Read fresh demo cart",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/cart",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Read fresh demo cart\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"cartEtag\",pm.response.headers.get(\"ETag\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17 Put 2 units in cart",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/v1/cart/items/{{variantId}}",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{cartEtag}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quantity\": 2\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Put 2 units in cart\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"cartEtag\",pm.response.headers.get(\"ETag\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "18 Preview final fee and total",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/orders/checkout/preview",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"addressId\": \"{{addressId}}\",\n  \"addressVersion\": \"{{addressVersion}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Preview final fee and total\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"orderTotal\",data.total);",
+              "pm.collectionVariables.set(\"cartEtag\",'\"'+data.cart.version+'\"');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "19 Checkout and reserve",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/orders/checkout",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{cartEtag}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{checkoutOperation}}\",\n  \"addressId\": \"{{addressId}}\",\n  \"addressVersion\": \"{{addressVersion}}\",\n  \"expectedTotal\": {{orderTotal}},\n  \"paymentMethod\": \"CashOnDelivery\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set(\"originalCheckoutEtag\",pm.collectionVariables.get(\"cartEtag\"));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\",()=>pm.response.to.have.status(201));",
+              "if(pm.response.code!==201) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Checkout and reserve\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"orderId\",data.id);",
+              "pm.test(\"Order pending\",()=>pm.expect(data.status).to.eql(\"Pending\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "20 Retry original checkout safely",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/orders/checkout",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{originalCheckoutEtag}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{checkoutOperation}}\",\n  \"addressId\": \"{{addressId}}\",\n  \"addressVersion\": \"{{addressVersion}}\",\n  \"expectedTotal\": {{orderTotal}},\n  \"paymentMethod\": \"CashOnDelivery\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Retry original checkout safely\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"Same order\",()=>pm.expect(data.id).to.eql(pm.collectionVariables.get(\"orderId\")));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "21 confirm order",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/confirm",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in confirm order\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"Confirmed\",()=>pm.expect(data.status).to.eql(\"Confirmed\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "22 prepare order",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/prepare",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in prepare order\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"Preparing\",()=>pm.expect(data.status).to.eql(\"Preparing\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "23 ready order",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/ready",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in ready order\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"ReadyForDispatch\",()=>pm.expect(data.status).to.eql(\"ReadyForDispatch\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "24 Assign courier",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/assign",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"driverId\": \"{{driverId}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Assign courier\"); }",
+              "const data=pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "25 Driver sees assigned jobs",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/driver/deliveries",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{driverAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Driver sees assigned jobs\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"Assignment visible\",()=>pm.expect(data.items.some(x=>x.orderId===pm.collectionVariables.get(\"orderId\"))).to.eql(true));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "26 Driver starts delivery",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/driver/deliveries/{{orderId}}/dispatch",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{driverAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Driver starts delivery\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"On the way\",()=>pm.expect(data.status).to.eql(\"OutForDelivery\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "27 Driver sends location",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/driver/location",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{driverAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"latitude\": 30.051,\n  \"longitude\": 31.351\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 204\",()=>pm.response.to.have.status(204));",
+              "if(pm.response.code!==204) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Driver sends location\"); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "28 Customer tracks own delivery",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/orders/{{orderId}}/tracking",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Customer tracks own delivery\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"Fresh location\",()=>pm.expect(data.latitude).to.eql(30.051));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "29 Customer reads receipt code",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/orders/{{orderId}}/delivery-code",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Customer reads receipt code\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"deliveryCode\",data.code);",
+              "pm.collectionVariables.set(\"wrongDeliveryCode\",data.code===\"000000\"?\"111111\":\"000000\");"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "30 Incorrect receipt code rejected",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/driver/deliveries/{{orderId}}/complete",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{driverAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{collectionOperation}}\",\n  \"deliveryCode\": \"{{wrongDeliveryCode}}\",\n  \"collectedAmount\": {{orderTotal}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\",()=>pm.response.to.have.status(400));",
+              "if(pm.response.code!==400) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Incorrect receipt code rejected\"); }",
+              "const data=pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "31 Deliver and record collected cash",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/driver/deliveries/{{orderId}}/complete",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{driverAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{collectionOperation}}\",\n  \"deliveryCode\": \"{{deliveryCode}}\",\n  \"collectedAmount\": {{orderTotal}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Deliver and record collected cash\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"Delivered\",()=>pm.expect(data.status).to.eql(\"Delivered\"));",
+              "pm.test(\"Paid\",()=>pm.expect(data.paymentStatus).to.eql(\"Paid\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "32 Retry delivery without collecting twice",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/driver/deliveries/{{orderId}}/complete",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{driverAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{collectionOperation}}\",\n  \"deliveryCode\": \"{{deliveryCode}}\",\n  \"collectedAmount\": {{orderTotal}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Retry delivery without collecting twice\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"Still delivered\",()=>pm.expect(data.status).to.eql(\"Delivered\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "33 Customer sees final order",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/orders/{{orderId}}",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Customer sees final order\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"Cash recorded\",()=>pm.expect(data.paymentStatus).to.eql(\"Paid\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "34 Customer reads payment receipt",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/payments/{{orderId}}",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Customer reads payment receipt\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"Collected\",()=>pm.expect(data.status).to.eql(\"Collected\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "35 Driver cash before handover",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/driver/cash",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{driverAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Driver cash before handover\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"Exact outstanding cash\",()=>pm.expect(data.outstandingCash).to.eql(Number(pm.collectionVariables.get(\"orderTotal\"))));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "36 Operations records cash handed over",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/payments/settlements",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{settlementOperation}}\",\n  \"driverId\": \"{{driverId}}\",\n  \"orderIds\": [\n    \"{{orderId}}\"\n  ],\n  \"amountReceived\": {{orderTotal}},\n  \"reference\": \"PM-{{runId}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Operations records cash handed over\"); }",
+              "const data=pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "37 Retry the same cash handover",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/payments/settlements",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{settlementOperation}}\",\n  \"driverId\": \"{{driverId}}\",\n  \"orderIds\": [\n    \"{{orderId}}\"\n  ],\n  \"amountReceived\": {{orderTotal}},\n  \"reference\": \"PM-{{runId}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Retry the same cash handover\"); }",
+              "const data=pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "38 Driver cash reconciled",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/driver/cash",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{driverAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Driver cash reconciled\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"No outstanding cash\",()=>pm.expect(data.outstandingCash).to.eql(0));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "39 Customer notification inbox",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/notifications?pageSize=100",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Customer notification inbox\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"Notifications exist\",()=>pm.expect(data.items.length>0).to.eql(true));pm.collectionVariables.set(\"notificationId\",data.items[0].id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "40 Mark own notification read",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/notifications/{{notificationId}}/read",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 204\",()=>pm.response.to.have.status(204));",
+              "if(pm.response.code!==204) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Mark own notification read\"); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "41 Verify no repeated stock deduction",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses/{{warehouseId}}/balances/{{variantId}}",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Verify no repeated stock deduction\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"20 minus 2 exactly once\",()=>pm.expect(data.onHand).to.eql(18));",
+              "pm.test(\"No reserved balance\",()=>pm.expect(data.reserved).to.eql(0));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "42 Receipt code hidden after delivery",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/orders/{{orderId}}/delivery-code",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 409\",()=>pm.response.to.have.status(409));",
+              "if(pm.response.code!==409) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Receipt code hidden after delivery\"); }",
+              "const data=pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "43 Location hidden after delivery",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/orders/{{orderId}}/tracking",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Location hidden after delivery\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"Location is private after delivery\",()=>pm.expect(data.latitude).to.eql(null));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "44 Read empty cart before return scenario",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/cart",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Read empty cart before return scenario\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"cartEtag\",pm.response.headers.get(\"ETag\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "45 Add 1 unit for failed-delivery scenario",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/api/v1/cart/items/{{variantId}}",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{cartEtag}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quantity\": 1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Add 1 unit for failed-delivery scenario\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"cartEtag\",pm.response.headers.get(\"ETag\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "46 Preview second order",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/orders/checkout/preview",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"addressId\": \"{{addressId}}\",\n  \"addressVersion\": \"{{addressVersion}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Preview second order\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"orderTotalB\",data.total);",
+              "pm.collectionVariables.set(\"cartEtag\",'\"'+data.cart.version+'\"');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "47 Checkout second order",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/orders/checkout",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{customerAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{cartEtag}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operationId\": \"{{checkoutOperationB}}\",\n  \"addressId\": \"{{addressId}}\",\n  \"addressVersion\": \"{{addressVersion}}\",\n  \"expectedTotal\": {{orderTotalB}},\n  \"paymentMethod\": \"CashOnDelivery\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\",()=>pm.response.to.have.status(201));",
+              "if(pm.response.code!==201) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Checkout second order\"); }",
+              "const data=pm.response.json();",
+              "pm.collectionVariables.set(\"orderIdB\",data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "48 confirm second order",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/orders/{{orderIdB}}/confirm",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in confirm second order\"); }",
+              "const data=pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "49 prepare second order",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/orders/{{orderIdB}}/prepare",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in prepare second order\"); }",
+              "const data=pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "50 ready second order",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/orders/{{orderIdB}}/ready",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in ready second order\"); }",
+              "const data=pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "51 Assign second order",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/orders/{{orderIdB}}/assign",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"driverId\": \"{{driverId}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Assign second order\"); }",
+              "const data=pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "52 Dispatch second order",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/driver/deliveries/{{orderIdB}}/dispatch",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{driverAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Dispatch second order\"); }",
+              "const data=pm.response.json();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "53 Record failed delivery",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/driver/deliveries/{{orderIdB}}/fail",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{driverAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"Demo customer unavailable\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Record failed delivery\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"Failure recorded\",()=>pm.expect(data.status).to.eql(\"DeliveryFailed\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "54 Return goods without restocking",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/orders/{{orderIdB}}/return-to-warehouse",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"Returned perishable demo goods - not suitable for restocking\",\n  \"restock\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Return goods without restocking\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"Returned\",()=>pm.expect(data.status).to.eql(\"Returned\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "55 Retry return safely",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/admin/orders/{{orderIdB}}/return-to-warehouse",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"Returned perishable demo goods - not suitable for restocking\",\n  \"restock\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Retry return safely\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"Still returned\",()=>pm.expect(data.status).to.eql(\"Returned\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "56 Final balance excludes unusable returns",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/admin/inventory/warehouses/{{warehouseId}}/balances/{{variantId}}",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operationsAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Final balance excludes unusable returns\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"Only the two confirmed orders deducted stock\",()=>pm.expect(data.onHand).to.eql(17));",
+              "pm.test(\"Nothing reserved\",()=>pm.expect(data.reserved).to.eql(0));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "57 Failed delivery has no cash collected",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/driver/cash",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{driverAccessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "if(pm.response.code!==200) { pm.execution.setNextRequest(null); throw new Error(\"Unexpected status in Failed delivery has no cash collected\"); }",
+              "const data=pm.response.json();",
+              "pm.test(\"No cash collected for failed order\",()=>pm.expect(data.outstandingCash).to.eql(0));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

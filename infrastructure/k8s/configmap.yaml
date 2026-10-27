@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: velo-config
+  namespace: velo
+data:
+  ASPNETCORE_ENVIRONMENT: Production
+  DOTNET_ENVIRONMENT: Production
+  ASPNETCORE_HTTP_PORTS: "8080"
+  Authentication__SmsProvider: HttpGateway
+  Authentication__ExposeDevelopmentCodes: "false"
+  DataProtection__CertificatePath: /certs/identity.pfx
+  Orders__EnableCheckout: "false"
+  Orders__DeliveryFee: "20"
+  Orders__DeliveryRadiusKm: "5"
+  Orders__ReservationMinutes: "10"
+  AllowedHosts: localhost;velo-api

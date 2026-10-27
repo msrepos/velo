@@ -75,6 +75,13 @@ app.MapOrderEndpoints();
 app.MapPaymentEndpoints();
 app.MapDeliveryEndpoints();
 app.MapNotificationEndpoints();
+if (app.Environment.IsDevelopment())
+    app.MapGet("/api/v1/development/info", () => Results.Ok(new
+    {
+        environment = "Development",
+        simulatedOtpEnabled = builder.Configuration["Authentication:SmsProvider"] == "Development" &&
+            builder.Configuration.GetValue<bool>("Authentication:ExposeDevelopmentCodes")
+    }));
 
 // Liveness only: this endpoint does not probe the database.
 app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions { Predicate = _ => false });

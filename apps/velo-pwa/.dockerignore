@@ -1,0 +1,8 @@
+node_modules
+dist
+.git
+.openai
+.sites-runtime
+*.tsbuildinfo
+.env*
+README.md

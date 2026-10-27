@@ -367,3 +367,24 @@ END;
 COMMIT;
 GO
 
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [identity].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261024210516_StaffSessions'
+)
+BEGIN
+    ALTER TABLE [identity].[Sessions] ADD [IsStaff] bit NOT NULL DEFAULT CAST(0 AS bit);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [identity].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261024210516_StaffSessions'
+)
+BEGIN
+    INSERT INTO [identity].[__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261024210516_StaffSessions', N'10.0.13');
+END;
+
+COMMIT;
+GO
+

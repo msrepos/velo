@@ -1,0 +1,23 @@
+# Dedicated Velo ingress controller. WSO2 retains the shared Envoy controller.
+ingressClass:
+  enabled: true
+  isDefaultClass: false
+  name: velo-traefik
+providers:
+  kubernetesCRD:
+    enabled: false
+  kubernetesIngress:
+    enabled: true
+    ingressClass: velo-traefik
+    namespaces: [velo]
+ports:
+  web:
+    expose:
+      default: false
+  websecure:
+    exposedPort: 443
+service:
+  type: LoadBalancer
+ingressRoute:
+  dashboard:
+    enabled: false

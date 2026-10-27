@@ -159,3 +159,32 @@ END;
 COMMIT;
 GO
 
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [orders].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261024210519_FulfillmentAndPayments'
+)
+BEGIN
+    ALTER TABLE [orders].[Orders] ADD [PaymentStatus] varchar(16) NOT NULL DEFAULT 'Unpaid';
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [orders].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261024210519_FulfillmentAndPayments'
+)
+BEGIN
+    ALTER TABLE [orders].[Orders] ADD [RestockDecisionJson] nvarchar(2000) NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [orders].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261024210519_FulfillmentAndPayments'
+)
+BEGIN
+    INSERT INTO [orders].[__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261024210519_FulfillmentAndPayments', N'10.0.13');
+END;
+
+COMMIT;
+GO
+

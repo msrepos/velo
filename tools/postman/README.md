@@ -1,5 +1,14 @@
 # VELO Postman auth cycle
 
+**Full backend cycle:** import `Velo.FullCycle.postman_collection.json`, select
+No environment, set only `operationsAccessToken` and run 01–57 in order within
+ten minutes against local Development. Issue that token with
+`--issue-development-operations-token <actual verified user GUID>`.
+It creates its own Catalog items, warehouse, demo customer/driver and two orders;
+tests delivery, exact cash collection/handover, inbox and failed delivery/return.
+Final stock is 17, reserved 0, driver outstanding cash 0. Incorrect receipt code
+(400) and requesting it after delivery (409) are expected. See `docs/fulfillment-api.md`.
+
 For COD checkout/orders, import `Velo.Orders.postman_collection.json`. Set
 `accessToken` (customer), `ordersStaffAccessToken`, `inventoryStaffAccessToken`
 and an active Catalog `variantId`. Run 01–27 in order within 10 minutes with

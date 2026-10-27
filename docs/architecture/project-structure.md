@@ -6,6 +6,7 @@ src/
   Velo.Api/
   Modules/
     Identity/Velo.Modules.Identity/
+    Identity/Velo.Modules.Identity.Contracts/
     Customers/Velo.Modules.Customers/
     Customers/Velo.Modules.Customers.Contracts/
     Catalog/Velo.Modules.Catalog/
@@ -14,8 +15,11 @@ src/
     Inventory/Velo.Modules.Inventory.Contracts/
     Orders/Velo.Modules.Orders/
     Payments/Velo.Modules.Payments/
+    Payments/Velo.Modules.Payments.Contracts/
     Delivery/Velo.Modules.Delivery/
+    Delivery/Velo.Modules.Delivery.Contracts/
     Notifications/Velo.Modules.Notifications/
+    Notifications/Velo.Modules.Notifications.Contracts/
 tests/
 docs/
 infrastructure/docker/
@@ -54,9 +58,11 @@ their schemas/contracts; extracting them requires a durable distributed workflow
 
 Domain code must not depend on HTTP or persistence libraries. These are folder
 conventions inside each assembly, not compiler-enforced layer boundaries.
-Identity, Catalog, Inventory, Customers and Orders own separate schemas/DbContexts/migration histories
+All eight modules own separate schemas/DbContexts/migration histories
 within the same SQL Server database. Access other
 modules through explicit contracts rather than their tables.
+The order coordinator now enlists seven business contexts, including Delivery,
+Payments and Notifications; Identity remains the separate authentication boundary.
 
 See [the authentication decision](authentication.md) for the accepted customer
 phone/OTP approach and the boundary between Identity and Notifications.

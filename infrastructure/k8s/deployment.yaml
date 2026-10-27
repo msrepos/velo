@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: velo-api
+  namespace: velo
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: velo-api }
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxSurge: 1, maxUnavailable: 0 }
+  template:
+    metadata:
+      labels: { app: velo-api }
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext: { runAsNonRoot: true, runAsUser: 1654, fsGroup: 1654 }
+      containers:
+        - name: api
+          image: velo-api:local
+          ports: [{ containerPort: 8080, name: http }]
+          envFrom:
+            - configMapRef: { name: velo-config }
+            - secretRef: { name: velo-runtime }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+          startupProbe:
+            httpGet: { path: /health/live, port: http, httpHeaders: [{ name: Host, value: velo-api }] }
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: { path: /health/live, port: http, httpHeaders: [{ name: Host, value: velo-api }] }
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /health/ready, port: http, httpHeaders: [{ name: Host, value: velo-api }] }
+            periodSeconds: 10
+            timeoutSeconds: 6
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+            - { name: certificate, mountPath: /certs, readOnly: true }
+      volumes:
+        - { name: tmp, emptyDir: {} }
+        - name: certificate
+          secret: { secretName: velo-dataprotection }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: velo-api
+  namespace: velo
+spec:
+  selector: { app: velo-api }
+  ports: [{ name: http, port: 80, targetPort: http }]
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: velo-api
+  namespace: velo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: { app: velo-api }

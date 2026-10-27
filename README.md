@@ -58,7 +58,7 @@ Backend API foundation for a grocery delivery mobile application.
 
 Built with C# / ASP.NET Core on .NET 10 as a modular monolith. SQL Server
 is the selected database, with separate EF Core contexts for Identity, Catalog,
-Inventory, Customers and Orders.
+Inventory, Customers, Orders, Delivery, Payments and Notifications.
 
 Authentication uses ASP.NET Core Identity with SQL Server. Customer sign-in
 uses phone OTP with a local development adapter; a real SMS provider will be integrated later.
@@ -77,6 +77,17 @@ dotnet run --project src/Velo.Api --launch-profile http
 
 Check `http://localhost:5080/health/live`; a successful response is `Healthy`.
 
+To run the API and an isolated SQL Server together in Docker Desktop (Linux
+containers), run from the repository root:
+
+```powershell
+./tools/docker/Start-Local.ps1
+```
+
+This creates local secrets, builds the image, applies migrations and checks
+`http://localhost:5080/health/ready`. Use `-Port 5081` if 5080 is busy.
+See [Docker deployment](docs/deployment.md) for logs, shutdown and existing SQL options.
+
 ## Current scope
 
 The solution contains one API host, eight module class libraries, Catalog/Customers/
@@ -86,7 +97,9 @@ transfers and expiring reservations are implemented. Management requires module 
 Saved customer addresses and the Orders cart are implemented with current Catalog
 prices and protection against concurrent edits. COD checkout supports a fee/total
 preview, automatic fulfillment selection, atomic stock reservations, confirmation,
-cancellation and expiry. Payments/fulfillment/delivery are subsequent milestones.
+cancellation and expiry. Fulfillment, courier assignment/tracking/receipt codes,
+COD collection/cash handover and an in-app notification inbox are implemented.
+Real SMS/push/card providers and production rollout require external setup.
 Configure `ConnectionStrings:Velo`
 and `Authentication:OtpHashKey` through user secrets before starting the API;
 migrations are applied explicitly. Local OTP codes are exposed only in Development.
@@ -164,6 +177,8 @@ This approach reduces direct coupling between services and allows VELO to scale 
 - [Inventory API, reservations and Postman cycle](docs/inventory-api.md)
 - [Customer addresses and cart API](docs/customer-cart-api.md)
 - [Checkout, order lifecycle and Postman cycle](docs/orders-api.md)
+- [Full delivery/COD cycle and complete Postman collection](docs/fulfillment-api.md)
+- [Docker, Kubernetes and staff provisioning](docs/deployment.md)
 - [Database migrations and Visual Studio commands](docs/architecture/database-migrations.md)
 - [Development and SQL Server setup](docs/development.md)
 - [Test plan](tests/README.md)

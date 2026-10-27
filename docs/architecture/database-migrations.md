@@ -16,6 +16,10 @@ and carts. Apply both explicitly using the commands in
 [Customer addresses and cart](../customer-cart-api.md).
 Checkout adds `OrderReservationOwnership` in Inventory and `CheckoutOrders` in
 Orders. Apply both contexts before running this API version; see [Orders setup](../orders-api.md).
+Fulfillment adds Identity.StaffSessions, Orders.FulfillmentAndPayments and the
+initial Delivery/Payments/Notifications migrations. Apply all eight contexts with
+the explicit `--migrate true` host command. New COD records for pre-Payments orders
+are established lazily when their order is read/processed. See [full cycle](../fulfillment-api.md).
 
 ```text
 src/Modules/Identity/Velo.Modules.Identity/Infrastructure/

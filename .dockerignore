@@ -1,0 +1,16 @@
+**/bin
+**/obj
+.git
+.vs
+.codex
+.agents
+**/appsettings.Local.json
+**/*.user
+**/*.suo
+**/.env
+**/.env.*
+**/TestResults
+**/*.trx
+**/*.log
+tests
+tools

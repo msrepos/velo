@@ -1,10 +1,11 @@
 # Checkout and orders
 
-The first order flow supports customer checkout, order history, customer
+The checkout flow supports customer checkout, order history, customer
 cancellation before confirmation, and staff confirmation. Payment is **CashOnDelivery**;
-orders remain **Unpaid**, including after confirmation. Payment collection,
-packing, dispatch, delivery, returns and cancellation after confirmation are
-later milestones. Confirmation consumes stock; it does not mark an order delivered.
+orders remain **Unpaid** until cash is collected during verified delivery.
+[Fulfillment and delivery](fulfillment-api.md) now add packing, assignment,
+tracking, receipt proof, cash handover and undelivered returns. Confirmation
+consumes stock; it does not mark an order delivered.
 
 ## Configuration
 

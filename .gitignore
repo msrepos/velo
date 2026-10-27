@@ -10,4 +10,6 @@ TestResults/
 .env
 .env.*
 !.env.example
+!.env.api.example
 **/appsettings.Local.json
+.local/

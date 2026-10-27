@@ -41,6 +41,9 @@
     <File Path="tools/postman/Velo.CustomerCart.postman_collection.json" />
     <File Path="tools/postman/Velo.Customers.postman_collection.json" />
     <File Path="tools/postman/Velo.Orders.postman_collection.json" />
+    <File Path="tools/postman/Velo.FullCycle.postman_collection.json" />
+    <File Path="tools/postman/Verify-FullCycle.ps1" />
+    <File Path="tools/postman/verify-full-cycle.mjs" />
     <File Path="tools/postman/README.md" />
     <File Path="tests/README.md" />
     <Project Path="tests/Velo.Auth.IntegrationTests/Velo.Auth.IntegrationTests.csproj" />
@@ -56,12 +59,22 @@
     <File Path="docs/inventory-api.md" />
     <File Path="docs/customer-cart-api.md" />
     <File Path="docs/orders-api.md" />
+    <File Path="docs/fulfillment-api.md" />
+    <File Path="docs/deployment.md" />
+    <File Path="docs/verification.md" />
     <File Path="docs/architecture/project-structure.md" />
     <File Path="docs/architecture/authentication.md" />
     <File Path="docs/architecture/database-migrations.md" />
   </Folder>
   <Folder Name="/infrastructure/">
     <File Path="infrastructure/docker/compose.yml" />
+    <File Path="infrastructure/docker/compose.api.yml" />
+    <File Path="infrastructure/docker/.env.api.example" />
+    <File Path="infrastructure/k8s/namespace.yaml" />
+    <File Path="infrastructure/k8s/configmap.yaml" />
+    <File Path="infrastructure/k8s/deployment.yaml" />
+    <File Path="infrastructure/k8s/migration-job.yaml" />
+    <File Path="infrastructure/k8s/secrets.example.yaml" />
     <File Path="infrastructure/docker/.env.example" />
     <File Path="infrastructure/database/identity.sql" />
     <File Path="infrastructure/database/catalog.sql" />
@@ -71,11 +84,17 @@
     <File Path="infrastructure/database/orders.sql" />
     <File Path="infrastructure/database/verify-customer-cart.sql" />
     <File Path="infrastructure/database/verify-orders.sql" />
+    <File Path="infrastructure/database/delivery.sql" />
+    <File Path="infrastructure/database/payments.sql" />
+    <File Path="infrastructure/database/notifications.sql" />
+    <File Path="infrastructure/database/verify-fulfillment.sql" />
     <File Path="infrastructure/database/verify-catalog.sql" />
     <File Path="infrastructure/database/verify-identity.sql" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path="README.md" />
+    <File Path="Dockerfile" />
+    <File Path=".dockerignore" />
     <File Path="Directory.Build.props" />
     <File Path="global.json" />
     <File Path=".config/dotnet-tools.json" />
