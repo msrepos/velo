@@ -119,12 +119,13 @@ public sealed partial class OrderService(OrdersDbContext db, CartService carts, 
         return await GetAsync(customer, id, ct);
     }
 
-    public async Task<OrderPage> AdminListAsync(string? status, int page, int pageSize, CancellationToken ct)
+    public async Task<OrderPage> AdminListAsync(string? status, int page, int pageSize, CancellationToken ct, Guid? warehouseId = null)
     {
         if (page is < 1 or > 1_000_000 || pageSize is < 1 or > 100) throw new OrderException(400, "invalid_pagination");
         if (status is not (null or "Pending" or "Confirmed" or "Preparing" or "ReadyForDispatch" or "OutForDelivery" or "Delivered" or "DeliveryFailed" or "Returned" or "Cancelled" or "Expired"))
             throw new OrderException(400, "invalid_order_status");
         var query = db.Orders.AsNoTracking();
+        if (warehouseId is not null) query = query.Where(x => x.WarehouseId == warehouseId);
         var now = time.GetUtcNow();
         if (status == "Pending") query = query.Where(x => x.Status == "Pending" && x.ExpiresAt > now);
         else if (status == "Expired") query = query.Where(x => x.Status == "Expired" || (x.Status == "Pending" && x.ExpiresAt <= now));
@@ -168,6 +169,7 @@ public sealed partial class OrderService(OrdersDbContext db, CartService carts, 
             var reservation = await stock.FinishAsync(order.ReservationId, true, actor, ct);
             if (reservation.Status != "Committed") throw new OrderException(409, "invalid_reservation_state");
             await EventAsync(order, "Confirmed", actor, null, ct);
+            await AssignVanDriverAsync(order, ct);
             await db.SaveChangesAsync(ct);
             return Map(order);
         }, ct);

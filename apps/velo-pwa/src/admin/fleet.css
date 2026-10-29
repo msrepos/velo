@@ -1,0 +1,15 @@
+.velo-admin-fleet-editor { margin-bottom: 24px; }
+.velo-admin-fleet-fieldset { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 20px; }
+.velo-admin-fleet-fieldset p { color: var(--velo-admin-muted); font-size: 12px; }
+.velo-admin-fleet-notice { padding: 14px 18px; background: #eef4e7; border: 1px solid #dce7d2; border-radius: 8px; margin-bottom: 18px !important; color: #516644; }
+.velo-admin-fleet-lookup { padding: 18px; background: #f7f8f4; border: 1px solid var(--velo-admin-line); border-radius: 10px; }
+.velo-admin-fleet-search { display: flex; gap: 10px; margin-top: 8px; }
+.velo-admin-fleet-search input { flex: 1; min-width: 0; }
+.velo-admin-fleet-account { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid var(--velo-admin-line); background: white; border-radius: 6px; justify-content: flex-start !important; text-align: left; }
+.velo-admin-fleet-account.selected { border-color: var(--velo-admin-red); }
+.velo-admin-fleet-account > svg:last-child { margin-left: auto; }
+.velo-admin-fleet-filter { display: flex; align-items: center; gap: 9px; margin: 18px 0; }
+.velo-admin-fleet-confirm { padding: 22px; margin-bottom: 22px; display: grid; gap: 14px; }
+.velo-admin-records code { overflow-wrap: anywhere; font-size: 11px; }
+.velo-admin-footnote + .velo-admin-fleet-editor, .velo-admin-footnote + .velo-admin-records { margin-top: 18px; }
+@media (max-width: 700px) { .velo-admin-fleet-search { flex-direction: column; } }

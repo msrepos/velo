@@ -82,13 +82,16 @@ Invoke-WebRequest https://api.velo.internal/health/ready
 ```
 
 The script requires context `docker-desktop`, applies the local configuration,
-runs a uniquely named migration Job and waits for completion before deploying
-and restarting the two API replicas. A completed Job does not run again when
-reapplied. The migrator uses the same API image with `--migrate true`; it exits
+runs the singleton `velo-migrate` Job and waits for completion before deploying
+and restarting the two API replicas. The script deletes the previous completed
+Job before creating it again, because a completed Job does not rerun when reapplied.
+Each run has one pod with no automatic retries. Unfinished or failed migration
+Jobs block deployment and are retained for diagnosis; inspect and resolve them
+before retrying. The migrator uses the same API image with `--migrate true`; it exits
 after checking/applying migrations for all eight modules, so no permanent migrator
-Deployment or Service is needed. Completed migration pods can be cleaned up;
-the Job status records completion. Inspect a retained run with
-`kubectl logs -n velo job/<job-name>`.
+Deployment or Service is needed. Successful legacy migration Jobs and their pods
+are removed after a new successful run, retaining only the latest completed pod.
+Inspect the retained run with `kubectl logs -n velo job/velo-migrate`.
 
 The `infrastructure/k8s-local` overlay selects Development, the Development SMS
 provider, and exposed simulated OTP codes. Run `Initialize-LocalIngress.ps1` with
@@ -98,9 +101,9 @@ and `velo.internal`, expires after one year, and is reused on subsequent runs.
 Certificate/key files live under ignored `.local/certificates`; keep the private
 key private. To renew, archive the pair and rerun initialization.
 
-The two Ingress resources route `https://api.velo.internal` to `velo-api:80` and
-`https://app.velo.internal` to `velo-pwa:80`. There is no ingress for `velo.internal`;
-it is reserved for the future website. Add `127.0.0.1 app.velo.internal api.velo.internal`
+The Ingress resources route `https://api.velo.internal` to `velo-api:80`,
+`https://app.velo.internal` to `velo-pwa:80`, and `https://velo.internal` to
+`velo-website:80`. Add `127.0.0.1 velo.internal app.velo.internal api.velo.internal`
 to Windows hosts. Trust `.local/certificates/velo.internal.crt` in your client's
 trusted certificate store for browser/PWA use, or use curl's `--cacert` option.
 The TLS Secret imports the certificate into ingress; it does not establish client trust.
@@ -132,11 +135,27 @@ Its source Dockerfile is `apps/velo-pwa/Dockerfile`; the Deployment/Service are 
 `infrastructure/k8s/pwa-deployment.yaml` and the TLS Ingress is in
 `infrastructure/k8s-local/pwa-ingress.yaml`. The complete local Kustomize overlay
 also includes these resources. Build both `velo-api:local` and `velo-pwa:local`
-before using the full-stack `Deploy-Local.ps1` script.
+before using the full-stack `Deploy-Local.ps1` script. The full overlay also includes
+the official website; build `velo-website:local` first with the script below.
 
 Browse the frontend at `https://app.velo.internal` after configuring hosts and
 trusting the self-signed certificate. This remains a sample-data demo with no
 live purchases or backend integration.
+
+## Official website on local Kubernetes
+
+The independent four-page marketing website is in `apps/velo-website`. Deploy it
+without restarting the API or customer application:
+
+```powershell
+./tools/k8s/Deploy-WebsiteLocal.ps1
+```
+
+This builds `velo-website:local` and rolls out two unprivileged Nginx replicas at
+`https://velo.internal`, using the existing ingress controller and TLS Secret.
+The website links to the customer app at `https://app.velo.internal`. Its contact
+form prepares an email in the visitor's email client; it does not send or store
+messages. See `apps/velo-website/README.md` for content configuration and local preview.
 
 ## Production prerequisites
 
@@ -169,6 +188,28 @@ FCM/APNs push require separate provider integration; in-app notifications work
 through the authenticated inbox API.
 
 ## Staff access
+
+### Separate minivan preparation app
+
+The minivan UI is built independently from `apps/velo-crew` and runs as
+`velo-crew` (two replicas, its own ClusterIP service and HTTPS ingress).
+Open `https://crew.velo.internal/`; use `/?demo=1` for sample orders.
+The admin interface remains at `https://app.velo.internal/admin`.
+Crew contains no admin frontend code and responds 404 on `/admin` routes.
+Both frontends share the permission-protected Velo API through separate
+same-origin proxies. This is deployment/UI separation; existing `orders.manage`
+permissions continue to cover all warehouses.
+
+```powershell
+./tools/k8s/Deploy-CrewLocal.ps1
+```
+
+Add `127.0.0.1 crew.velo.internal` to Windows hosts, using the existing wildcard
+TLS certificate. The old PWA `/staff` URL redirects to the crew hostname after
+rebuilding the PWA. Rebuild and roll out `velo-api:local` when changing the backend
+warehouse filter; this change requires no database migrations. The full local
+Kustomize overlay includes crew, so provision `velo-crew:local` before a full
+`Deploy-Local.ps1` run.
 
 Provision only an active verified user from a server terminal:
 

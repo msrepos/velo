@@ -9,7 +9,8 @@ using Velo.Modules.Delivery.Domain;
 using Velo.Modules.Delivery.Infrastructure.Persistence;
 using Velo.Modules.Identity.Contracts;
 namespace Velo.Modules.Delivery.Infrastructure;
-public sealed class DeliveryService(DeliveryDbContext db, IVerifiedUsers users, IDataProtectionProvider protection, TimeProvider time) : IDeliveries
+public sealed partial class DeliveryService(DeliveryDbContext db, IVerifiedUsers users, IDataProtectionProvider protection,
+    TimeProvider time, Velo.Modules.Inventory.Contracts.IMobileWarehouses vans) : IDeliveries
 {
     private readonly IDataProtector protector = protection.CreateProtector("Velo.Delivery.ReceiptProof.v1");
     private static bool Active(string state) => state is "Assigned" or "OutForDelivery" or "Failed";
@@ -38,6 +39,8 @@ public sealed class DeliveryService(DeliveryDbContext db, IVerifiedUsers users, 
         {
             var driver = await db.Drivers.SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new DeliveryException(404, "driver_not_found");
             if (!driver.RowVersion.SequenceEqual(request.Version!)) throw new DeliveryException(409, "driver_version_conflict");
+            if (!request.IsActive && await db.VanDispatches.AnyAsync(x => x.DriverId == id && x.EndedAt == null, ct))
+                throw new DeliveryException(409, "driver_has_active_dispatch");
             if (!request.IsActive && await db.Shipments.AnyAsync(x => x.DriverId == id &&
                 (x.Status == "Assigned" || x.Status == "OutForDelivery" || x.Status == "Failed"), ct))
                 throw new DeliveryException(409, "driver_has_active_delivery");
@@ -90,6 +93,7 @@ public sealed class DeliveryService(DeliveryDbContext db, IVerifiedUsers users, 
                 job.DriverId = driverId;
             }
             job.Status = "Assigned"; job.AssignedAt = time.GetUtcNow(); job.DispatchedAt = null;
+            job.TravelStartedAt = null; job.ArrivedAt = null;
             job.ProofProtected = null; job.ProofExpiresAt = null; job.ProofAttempts = 0; job.FailureReason = null;
             await db.SaveChangesAsync(ct);
             return new Assignment(orderId, customerId, driverId, driver.UserId, job.Status);
@@ -185,7 +189,7 @@ public sealed class DeliveryService(DeliveryDbContext db, IVerifiedUsers users, 
         var query = db.Shipments.AsNoTracking().Where(x => x.DriverId == driver);
         var rows = await query.OrderByDescending(x => x.AssignedAt).ThenBy(x => x.OrderId).Skip((page - 1) * pageSize).Take(pageSize).ToArrayAsync(ct);
         return new(rows.Select(x => new DriverDeliveryResponse(x.OrderId, x.Status, Active(x.Status) ? x.AmountDue : 0,
-            Active(x.Status) ? JsonSerializer.Deserialize<Dropoff>(x.DropoffJson) : null, x.AssignedAt, x.DispatchedAt, x.FailureReason, x.Attempt)).ToArray(),
+            Active(x.Status) ? JsonSerializer.Deserialize<Dropoff>(x.DropoffJson) : null, x.AssignedAt, x.DispatchedAt, x.FailureReason, x.Attempt, x.TravelStartedAt, x.ArrivedAt)).ToArray(),
             page, pageSize, await query.CountAsync(ct));
     }
     private Task<bool> LockProofAsync(Guid orderId, CancellationToken ct) =>

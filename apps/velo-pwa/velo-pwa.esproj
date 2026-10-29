@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/1.0.7173973">
+  <PropertyGroup>
+    <StartupCommand>pnpm dev</StartupCommand>
+    <BuildCommand>pnpm build</BuildCommand>
+    <TestCommand>pnpm test</TestCommand>
+    <PublishCommand>pnpm build</PublishCommand>
+    <ShouldRunNpmInstall>false</ShouldRunNpmInstall>
+    <BuildOutputFolder>$(MSBuildProjectDirectory)\dist</BuildOutputFolder>
+  </PropertyGroup>
+  <Target Name="InstallPnpmDependencies" BeforeTargets="BeforeRestore;NPMRestore;CoreCompile;ComputeRunArguments"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <Exec Command="pnpm install --frozen-lockfile" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+</Project>

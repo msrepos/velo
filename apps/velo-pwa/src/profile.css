@@ -1,0 +1,25 @@
+.profile-panel{max-width:700px;border:1px solid var(--line);border-radius:12px;background:white;padding:24px;margin-top:24px}
+.profile-panel h3,.profile-section-heading h3,.address-editor h3{font-size:16px;margin:0}
+.profile-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.saved-address{border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:12px;overflow-wrap:anywhere}
+.saved-address-heading{display:flex;align-items:center;gap:9px;font-size:13px;flex-wrap:wrap}
+.saved-address-heading>svg{color:#748867}
+.saved-address p{font-size:12px;color:var(--muted);line-height:1.7;margin-top:7px;white-space:pre-line}
+.address-actions{display:flex;align-items:center;flex-wrap:wrap;gap:16px;margin-top:15px}
+.secondary-action{display:inline-flex;align-items:center;gap:5px;color:var(--green);font-size:12px;text-decoration:underline;text-underline-offset:3px;min-height:36px}
+.remove-address{color:var(--red)}
+.address-form .default-address-toggle,.delivery-choice{display:flex;align-items:center;gap:9px;font-size:12px;margin-top:16px}
+.address-form .default-address-toggle input,.delivery-choice input,.payment-choice input{width:18px;height:18px;min-width:18px;margin:0;padding:0;accent-color:var(--red)}
+.payment-methods{padding:0;border:0;min-width:0;margin:24px 0 0}
+.payment-methods legend{font-size:14px;font-weight:600;margin-bottom:6px}
+.payment-choice{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:10px;cursor:pointer}
+.payment-choice.selected{border-color:#8b9d78;background:#f3f5e9}
+.payment-choice>span{flex:1;min-width:0}
+.payment-choice strong{font-size:13px}
+.payment-choice small,.transfer-details small{display:block;font-size:11px;color:var(--muted);line-height:1.7;margin-top:5px}
+.payment-choice>svg{color:#748867;flex-shrink:0}
+.transfer-details{padding:16px;background:#f3f5e9;border-radius:10px;margin-top:14px;font-size:13px}
+.transfer-details p{font-size:20px;letter-spacing:1px;margin:12px 0;overflow-wrap:anywhere}
+.checkout-destination{display:flex;gap:7px;font-size:11px;color:var(--muted);margin-top:14px;line-height:1.7}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:760px){.profile-panel{padding:17px}.saved-address{padding:13px}.payment-choice{padding:13px;gap:9px}.profile-section-heading h3{font-size:14px}}

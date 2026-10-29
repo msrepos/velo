@@ -25,6 +25,8 @@ public sealed class Shipment
     public int Attempt { get; set; } = 1;
     public DateTimeOffset AssignedAt { get; set; }
     public DateTimeOffset? DispatchedAt { get; set; }
+    public DateTimeOffset? TravelStartedAt { get; set; }
+    public DateTimeOffset? ArrivedAt { get; set; }
     public DateTimeOffset? CompletedAt { get; set; }
     public string? FailureReason { get; set; }
     public byte[] RowVersion { get; set; } = [];

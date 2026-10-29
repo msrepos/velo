@@ -4,6 +4,8 @@ resources:
   - ../k8s
   - api-ingress.yaml
   - pwa-ingress.yaml
+  - crew-ingress.yaml
+  - website-ingress.yaml
 patches:
   - target:
       kind: ConfigMap

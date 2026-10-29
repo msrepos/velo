@@ -16,7 +16,9 @@ public sealed partial class OrderService
             var target = ready ? "ReadyForDispatch" : "Preparing";
             if (order.Status == target) return Map(order);
             if (order.Status != (ready ? "Preparing" : "Confirmed")) throw new OrderException(409, "invalid_order_state");
-            await EventAsync(order, target, actor, null, ct); await db.SaveChangesAsync(ct); return Map(order);
+            await EventAsync(order, target, actor, null, ct);
+            await AssignVanDriverAsync(order, ct);
+            await db.SaveChangesAsync(ct); return Map(order);
         }, ct);
     }
     public async Task<OrderResponse> AssignAsync(Guid orderId, Guid actor, AssignDriverRequest request, CancellationToken ct)
@@ -26,14 +28,14 @@ public sealed partial class OrderService
         return await transaction.RunAsync(owner, orderId, async () =>
         {
             var order = await OwnedAsync(owner, orderId, ct);
-            if (order.Status is not ("ReadyForDispatch" or "DeliveryFailed")) throw new OrderException(409, "invalid_order_state");
+            if (order.Status is not ("Confirmed" or "Preparing" or "ReadyForDispatch" or "DeliveryFailed")) throw new OrderException(409, "invalid_order_state");
             var address = JsonSerializer.Deserialize<DeliveryAddress>(order.AddressJson)!;
             var assignment = await deliveries.AssignAsync(orderId, owner, request.DriverId,
                 new(address.RecipientName, address.PhoneNumber, address.City, address.Area, address.Street, address.Building,
                     address.Floor, address.Apartment, address.Instructions, address.Latitude, address.Longitude), order.Total, ct);
             if (!assignment.Replayed)
             {
-                await EventAsync(order, "ReadyForDispatch", actor, "Delivery assigned", ct);
+                await EventAsync(order, order.Status == "DeliveryFailed" ? "ReadyForDispatch" : order.Status, actor, "Delivery assigned", ct);
                 await notifications.QueueAsync(assignment.DriverUserId, $"assignment:{orderId:N}:{order.Events.Count}", "Delivery.Assigned",
                     "New delivery", "A delivery has been assigned to you.", JsonSerializer.Serialize(new { orderId }), ct);
             }

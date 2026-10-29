@@ -5,6 +5,7 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
     <ProjectReference Include="../Velo.Modules.Delivery.Contracts/Velo.Modules.Delivery.Contracts.csproj" />
     <ProjectReference Include="../../Identity/Velo.Modules.Identity.Contracts/Velo.Modules.Identity.Contracts.csproj" />
+    <ProjectReference Include="../../Inventory/Velo.Modules.Inventory.Contracts/Velo.Modules.Inventory.Contracts.csproj" />
     <Folder Include="Domain/" />
     <Folder Include="Application/" />
     <Folder Include="Infrastructure/" />

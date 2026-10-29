@@ -5,3 +5,5 @@ resources:
   - configmap.yaml
   - deployment.yaml
   - pwa-deployment.yaml
+  - crew-deployment.yaml
+  - website-deployment.yaml

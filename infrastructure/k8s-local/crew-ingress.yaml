@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: velo-crew
+  namespace: velo
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: velo-traefik
+  tls:
+    - hosts: [crew.velo.internal]
+      secretName: velo-wildcard-tls
+  rules:
+    - host: crew.velo.internal
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: velo-crew
+                port:
+                  number: 80
+

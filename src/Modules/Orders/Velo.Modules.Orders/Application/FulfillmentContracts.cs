@@ -5,3 +5,4 @@ public sealed record DeliveryFailureRequest(string Reason);
 public sealed record CompleteDeliveryRequest(Guid OperationId, string DeliveryCode, decimal CollectedAmount);
 public sealed record AdminCancelRequest(string Reason, Guid? RestockWarehouseId = null);
 public sealed record ReturnOrderRequest(string Reason, [property: JsonRequired] bool Restock, Guid? WarehouseId = null);
+public sealed record DriverWorkResponse(OrderResponse Order, Velo.Modules.Delivery.Contracts.DriverJourney Journey);

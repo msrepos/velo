@@ -30,8 +30,8 @@ public static class OrderEndpoints
             OrderService service, CancellationToken ct) => Results.Ok(await service.CancelAsync(UserId(user), id, request, ct)));
         var admin = endpoints.MapGroup("/api/v1/admin/orders").WithTags("Order management")
             .RequireAuthorization(OrderPolicies.Manage).AddEndpointFilter(Errors);
-        admin.MapGet("/", async (OrderService service, CancellationToken ct, string? status = null, int page = 1, int pageSize = 20) =>
-            Results.Ok(await service.AdminListAsync(status, page, pageSize, ct)));
+        admin.MapGet("/", async (OrderService service, CancellationToken ct, string? status = null, int page = 1, int pageSize = 20, Guid? warehouseId = null) =>
+            Results.Ok(await service.AdminListAsync(status, page, pageSize, ct, warehouseId)));
         admin.MapGet("/{id:guid}", async (Guid id, OrderService service, CancellationToken ct) => Results.Ok(await service.AdminGetAsync(id, ct)));
         admin.MapPost("/{id:guid}/confirm", async (Guid id, ClaimsPrincipal user, OrderService service, CancellationToken ct) =>
             Results.Ok(await service.ConfirmAsync(id, UserId(user), ct)));
@@ -46,6 +46,12 @@ public static class OrderEndpoints
         admin.MapPost("/{id:guid}/return-to-warehouse", async (Guid id, ReturnOrderRequest request, ClaimsPrincipal user, OrderService service, CancellationToken ct) =>
             Results.Ok(await service.ReturnAsync(UserId(user), id, request, ct)));
         var driver = endpoints.MapGroup("/api/v1/driver/deliveries").WithTags("Driver workflow").RequireAuthorization().AddEndpointFilter(Errors);
+        endpoints.MapGet("/api/v1/driver/work", async (ClaimsPrincipal user, OrderService service, CancellationToken ct) =>
+        { var result = await service.DriverWorkAsync(UserId(user), ct); return result is null ? Results.NoContent() : Results.Ok(result); })
+            .RequireAuthorization().AddEndpointFilter(Errors);
+        endpoints.MapPost("/api/v1/driver/work/next", async (ClaimsPrincipal user, OrderService service, CancellationToken ct) =>
+        { var result = await service.NextDriverWorkAsync(UserId(user), ct); return result is null ? Results.NoContent() : Results.Ok(result); })
+            .RequireAuthorization().AddEndpointFilter(Errors);
         driver.MapPost("/{id:guid}/dispatch", async (Guid id, ClaimsPrincipal user, OrderService service, CancellationToken ct) =>
             Results.Ok(await service.DispatchAsync(UserId(user), id, ct)));
         driver.MapPost("/{id:guid}/complete", async (Guid id, CompleteDeliveryRequest request, ClaimsPrincipal user, OrderService service, CancellationToken ct) =>

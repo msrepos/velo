@@ -1,4 +1,10 @@
 <Solution>
+  <Folder Name="/apps/">
+    <Project Path="apps/velo-pwa/velo-pwa.esproj">
+      <Build />
+      <Deploy />
+    </Project>
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Velo.Api/Velo.Api.csproj" />
   </Folder>

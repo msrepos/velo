@@ -40,6 +40,7 @@ builder.Services.AddInventoryModule(builder.Configuration.GetConnectionString("V
 builder.Services.AddCustomersModule(builder.Configuration.GetConnectionString("Velo")!);
 builder.Services.AddOrdersModule(builder.Configuration.GetConnectionString("Velo")!, builder.Configuration);
 builder.Services.AddScoped<IOrderTransaction, OrderSqlTransaction>();
+builder.Services.AddScoped<Velo.Modules.Identity.Application.IAdminUsers, AdminUsers>();
 builder.Services.AddPaymentsModule(builder.Configuration.GetConnectionString("Velo")!);
 builder.Services.AddDeliveryModule(builder.Configuration.GetConnectionString("Velo")!);
 builder.Services.AddNotificationsModule(builder.Configuration.GetConnectionString("Velo")!);
@@ -67,6 +68,7 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapIdentityEndpoints();
+app.MapUserAdminEndpoints();
 app.MapCatalogEndpoints();
 app.MapInventoryEndpoints();
 app.MapCustomerEndpoints();

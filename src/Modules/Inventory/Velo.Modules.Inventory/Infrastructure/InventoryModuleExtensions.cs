@@ -20,6 +20,7 @@ public static class InventoryModuleExtensions
         services.Configure<InventoryOptions>(configuration.GetSection("Inventory"));
         services.AddScoped<InventoryTransaction>();
         services.AddScoped<InventoryService>();
+        services.AddScoped<Velo.Modules.Inventory.Contracts.IMobileWarehouses, MobileWarehouses>();
         services.AddScoped<Velo.Modules.Inventory.Contracts.IOrderStock, OrderStock>();
         services.AddHostedService<InventoryExpiryWorker>();
         services.AddAuthorization(options => options.AddPolicy(InventoryPolicies.Manage, policy =>

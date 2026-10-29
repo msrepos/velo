@@ -9,7 +9,7 @@ public sealed class StaffAccessService(IdentityDbContext db, UserManager<Applica
     AuthDatabaseLock locks, SessionTokens tokens, TimeProvider time)
 {
     public const string ClaimType = "velo.staff.permission";
-    public static readonly string[] Allowed = ["catalog.manage", "inventory.manage", "orders.manage", "delivery.manage", "payments.manage"];
+    public static readonly string[] Allowed = ["catalog.manage", "inventory.manage", "orders.manage", "delivery.manage", "payments.manage", "users.manage"];
     public async Task<string[]> PermissionsAsync(Guid user, CancellationToken ct) => await db.UserClaims.AsNoTracking()
         .Where(x => x.UserId == user && x.ClaimType == ClaimType && x.ClaimValue != null && Allowed.Contains(x.ClaimValue))
         .Select(x => x.ClaimValue!).Distinct().OrderBy(x => x).ToArrayAsync(ct);
